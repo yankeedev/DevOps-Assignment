@@ -1,6 +1,6 @@
-# Agriculture Project - Official Color Palette
+# Official Color Palette
 
-A carefully curated palette inspired by nature, growth, and harvest.
+A curated palette inspired by nature, growth, and harvest.
 Designed for accessibility, readability, and modern agricultural UI/UX.
 
 ## 1. Color Overview
