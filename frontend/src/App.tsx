@@ -1,7 +1,14 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import EquipmentListingPage from './pages/EquipmentListingPage'
+import DashboardPage from './pages/DashboardPage'
+
 export default function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <h1 className="text-3xl font-bold text-green-700">AgriRent</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/"          element={<EquipmentListingPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
