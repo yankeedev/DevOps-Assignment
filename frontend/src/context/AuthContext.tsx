@@ -14,8 +14,15 @@ export interface User {
   role: "farmer" | "buyer" | "admin";
 }
 
-interface LoginInput { email: string; password: string; }
-interface RegisterInput extends LoginInput { name: string; role?: "farmer" | "buyer"; }
+interface LoginInput {
+  email: string;
+  password: string;
+}
+
+interface RegisterInput extends LoginInput {
+  name: string;
+  role?: "farmer" | "buyer";
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -34,9 +41,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.post("/auth/refresh");
+        const { data } = await api.post("/api/auth/refresh");
         setAccessToken(data.accessToken);
-        setUser(data.user as User);
+        setUser(data.user);
       } catch {
         setUser(null);
       } finally {
@@ -46,23 +53,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (input: LoginInput): Promise<User> => {
-    const { data } = await api.post("/auth/login", input);
-    const nextUser = data.user as User;
+    const { data } = await api.post("/api/auth/login", input);
     setAccessToken(data.accessToken);
-    setUser(nextUser);
-    return nextUser;
+    setUser(data.user);
+    return data.user as User;
   };
 
   const register = async (input: RegisterInput): Promise<User> => {
-    const { data } = await api.post("/auth/register", input);
-    const nextUser = data.user as User;
+    const { data } = await api.post("/api/auth/register", input);
     setAccessToken(data.accessToken);
-    setUser(nextUser);
-    return nextUser;
+    setUser(data.user);
+    return data.user as User;
   };
 
   const logout = async () => {
-    await api.post("/auth/logout");
+    await api.post("/api/auth/logout");
     setAccessToken(null);
     setUser(null);
   };

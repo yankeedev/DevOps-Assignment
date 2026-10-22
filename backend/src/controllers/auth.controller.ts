@@ -30,25 +30,21 @@ const loginSchema = z.object({
   password: z.string().min(6),
 });
 
-const normalizeUserRole = (role?: "farmer" | "buyer") => {
-  switch (role) {
-    case "farmer":
-      return "FARMER";
-    case "buyer":
-      return "EQUIPMENT_OWNER";
-    default:
-      return "FARMER";
-  }
+const toDbRole = (role?: "farmer" | "buyer"): "FARMER" | "EQUIPMENT_OWNER" => {
+  if (role === "buyer") return "EQUIPMENT_OWNER";
+  return "FARMER";
 };
 
 const toFrontendRole = (role: string): "farmer" | "buyer" | "admin" => {
   switch (role) {
     case "ADMIN":
       return "admin";
-    case "FARMER":
-      return "farmer";
-    default:
+    case "EQUIPMENT_OWNER":
+    case "SHOP_OWNER":
       return "buyer";
+    case "FARMER":
+    default:
+      return "farmer";
   }
 };
 
@@ -61,17 +57,20 @@ const sanitizeUser = (user: { id: string; name: string; email: string; role: str
 
 const issueTokens = (user: { id: string; role: string }) => {
   const payload = { userId: user.id, role: user.role };
-
   return {
     accessToken: jwt.sign(payload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES }),
     refreshToken: jwt.sign(payload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES }),
   };
 };
 
-const sendSession = (res: Response, user: { id: string; name: string; email: string; role: string }, status = 200) => {
+const sendSession = (
+  res: Response,
+  user: { id: string; name: string; email: string; role: string },
+  status = 200
+) => {
   const { accessToken, refreshToken } = issueTokens(user);
   res.cookie("refreshToken", refreshToken, cookieOptions);
-  res.status(status).json({ user: sanitizeUser(user), accessToken });
+  return res.status(status).json({ user: sanitizeUser(user), accessToken });
 };
 
 export const register = async (req: Request, res: Response) => {
@@ -90,7 +89,7 @@ export const register = async (req: Request, res: Response) => {
         name: data.name.trim(),
         email,
         passwordHash,
-        role: normalizeUserRole(data.role),
+        role: toDbRole(data.role),
       },
     });
 
@@ -156,11 +155,9 @@ export const me = async (req: Request, res: Response) => {
   if (!authReq.user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-
   const user = await prisma.user.findUnique({ where: { id: authReq.user.userId } });
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
-
   return res.json({ user: sanitizeUser(user) });
 };
