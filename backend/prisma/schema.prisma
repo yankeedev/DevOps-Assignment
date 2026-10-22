@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  FARMER
+  EQUIPMENT_OWNER
+  SHOP_OWNER
+  ADMIN
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  UNAVAILABLE
+  MAINTENANCE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum ProductCategory {
+  SEEDS
+  FERTILIZERS
+  PESTICIDES
+  TOOLS
+  OTHER
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  equipment      Equipment[]
+  farmerBookings Booking[]   @relation("FarmerBookings")
+  ownerBookings  Booking[]   @relation("OwnerBookings")
+  shops          SupplyShop[]
+  reviews        Review[]
+}
+
+model Equipment {
+  id             String          @id @default(cuid())
+  name           String
+  description    String
+  category       String
+  dailyPrice     Decimal         @db.Decimal(10, 2)
+  status         EquipmentStatus @default(AVAILABLE)
+  approvalStatus ApprovalStatus  @default(PENDING)
+  imageUrl       String?
+  district       String
+  sector         String
+  ownerId        String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  reviews  Review[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([approvalStatus])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  equipmentId   String
+  farmerId      String
+  ownerId       String
+  startDate     DateTime
+  endDate       DateTime
+  totalCost     Decimal       @db.Decimal(10, 2)
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+  farmer    User      @relation("FarmerBookings", fields: [farmerId], references: [id], onDelete: Cascade)
+  owner     User      @relation("OwnerBookings", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([equipmentId])
+  @@index([farmerId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model SupplyShop {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  phone       String
+  address     String
+  district    String
+  sector      String
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products SupplyProduct[]
+
+  @@index([ownerId])
+}
+
+model SupplyProduct {
+  id             String          @id @default(cuid())
+  name           String
+  description    String
+  category       ProductCategory
+  price          Decimal         @db.Decimal(10, 2)
+  unit           String
+  quantity       Int
+  shopId         String
+  approvalStatus ApprovalStatus  @default(PENDING)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  shop SupplyShop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([approvalStatus])
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  rating      Int
+  comment     String?
+  status      ReviewStatus @default(PUBLISHED)
+  userId      String
+  equipmentId String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, equipmentId])
+  @@index([equipmentId])
+  @@index([status])
+}
