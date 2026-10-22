@@ -39,9 +39,12 @@ export default function LandingPage() {
                 </Link>
               )}
               {!loading && user && (
-                <p className="self-center text-sm text-gray-600">
-                  You are signed in — use <strong className="font-medium">Sign out</strong> in the header when you are done.
-                </p>
+                <Link
+                  to="/profile"
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-gray-800 font-medium hover:bg-gray-50"
+                >
+                  Go to your profile
+                </Link>
               )}
             </div>
           </div>

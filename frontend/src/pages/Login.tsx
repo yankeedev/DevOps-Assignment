@@ -16,7 +16,7 @@ export const Login = () => {
     setBusy(true);
     try {
       await login({ email, password });
-      navigate("/", { replace: true });
+      navigate("/profile", { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
     } finally {

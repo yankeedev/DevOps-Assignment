@@ -1,5 +1,10 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  isActive
+    ? 'text-green-700 font-semibold'
+    : 'text-gray-700 hover:text-green-700'
 
 export default function SiteHeader() {
   const { user, loading, logout } = useAuth()
@@ -10,6 +15,8 @@ export default function SiteHeader() {
     navigate('/', { replace: true })
   }
 
+  const canManageTools = user?.role === 'buyer' || user?.role === 'admin'
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
@@ -17,28 +24,31 @@ export default function SiteHeader() {
           AgriRent
         </Link>
 
-        <nav className="flex items-center gap-3 sm:gap-4 text-sm font-medium flex-wrap justify-end">
-          <Link to="/equipment" className="text-gray-700 hover:text-green-700">
-            Browse equipment
-          </Link>
+        <nav className="flex items-center gap-3 sm:gap-5 text-sm font-medium flex-wrap justify-end">
+          <NavLink to="/" end className={navLinkClass}>
+            Home
+          </NavLink>
+          <NavLink to="/equipment" className={navLinkClass}>
+            Browse tools
+          </NavLink>
 
           {loading ? (
             <span className="text-gray-400">…</span>
           ) : user ? (
             <>
-              {(user.role === 'buyer' || user.role === 'admin') && (
-                <Link to="/dashboard" className="text-gray-700 hover:text-green-700">
+              <NavLink to="/profile" className={navLinkClass}>
+                Profile
+              </NavLink>
+              {canManageTools && (
+                <NavLink to="/dashboard" className={navLinkClass}>
                   Dashboard
-                </Link>
+                </NavLink>
               )}
               {user.role === 'admin' && (
-                <Link to="/admin" className="text-gray-700 hover:text-green-700">
+                <NavLink to="/admin" className={navLinkClass}>
                   Admin
-                </Link>
+                </NavLink>
               )}
-              <span className="text-gray-500 hidden sm:inline">
-                Hi, {user.name.split(' ')[0]}
-              </span>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -49,10 +59,7 @@ export default function SiteHeader() {
             </>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="text-gray-700 hover:text-green-700"
-              >
+              <Link to="/login" className="text-gray-700 hover:text-green-700">
                 Sign in
               </Link>
               <Link

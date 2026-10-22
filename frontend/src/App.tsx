@@ -6,6 +6,7 @@ import { Register } from './pages/Register'
 import LandingPage from './pages/LandingPage'
 import EquipmentListingPage from './pages/EquipmentListingPage'
 import DashboardPage from './pages/DashboardPage'
+import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 
 export default function App() {
@@ -18,9 +19,18 @@ export default function App() {
           <Route path="/register" element={<Register />} />
 
           <Route
-            path="/dashboard"
+            path="/profile"
             element={
               <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['buyer', 'admin']}>
                 <DashboardPage />
               </ProtectedRoute>
             }
