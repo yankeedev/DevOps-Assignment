@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchAvailableEquipment } from '../services/equipmentService'
 import type { PublicEquipment } from '../types/equipment'
 import EquipmentCard from '../components/EquipmentCard'
+import SiteHeader from '../components/SiteHeader'
 
 export default function EquipmentListingPage() {
   const [equipment, setEquipment] = useState<PublicEquipment[]>([])
@@ -17,14 +18,7 @@ export default function EquipmentListingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold text-green-700">AgriRent</h1>
-          <a href="/dashboard" className="text-sm text-green-700 hover:underline font-medium">
-            Owner Dashboard →
-          </a>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-6">

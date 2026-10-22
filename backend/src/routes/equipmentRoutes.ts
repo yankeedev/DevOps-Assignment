@@ -1,14 +1,15 @@
-import { Router } from 'express'
+import { Router } from "express";
 import {
   createEquipment,
   listAvailableEquipment,
-  listOwnerEquipment,
-} from '../controllers/equipmentController'
+  listMyEquipment,
+} from "../controllers/equipmentController";
+import { requireAuth, requireRole } from "../middleware/auth.middleware";
 
-const router = Router()
+const router = Router();
 
-router.get('/',                    listAvailableEquipment)
-router.get('/owner/:ownerId',      listOwnerEquipment)
-router.post('/',                   createEquipment)
+router.get("/", listAvailableEquipment);
+router.get("/mine", requireAuth, requireRole("EQUIPMENT_OWNER"), listMyEquipment);
+router.post("/", requireAuth, requireRole("EQUIPMENT_OWNER"), createEquipment);
 
-export default router
+export default router;

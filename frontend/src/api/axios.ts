@@ -28,7 +28,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
       try {
-        const refreshUrl = backendBaseUrl ? `${backendBaseUrl}/auth/refresh` : "/auth/refresh";
+        const refreshUrl = backendBaseUrl
+          ? `${backendBaseUrl}/api/auth/refresh`
+          : "/api/auth/refresh";
         const { data } = await axios.post(refreshUrl, {}, { withCredentials: true });
 
         setAccessToken(data.accessToken as string);

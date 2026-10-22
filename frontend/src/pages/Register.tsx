@@ -1,30 +1,26 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export const Register = () => {
-  const { user, register } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    name: "", email: "", password: "",
+    name: "",
+    email: "",
+    password: "",
     role: "farmer" as "farmer" | "buyer",
   });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      navigate(user.role === "admin" ? "/admin" : "/dashboard", { replace: true });
-    }
-  }, [user, navigate]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setBusy(true);
     try {
-      const newUser = await register(form);
-      navigate(newUser.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      await register(form);
+      navigate("/", { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed");
     } finally {
@@ -35,16 +31,13 @@ export const Register = () => {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <h1 className="auth-title">Welcome back</h1>
-
-        <div className="auth-switch" aria-label="Authentication switch">
+        <h1 className="auth-title">Create account</h1>
+        <div className="auth-switch">
           <button type="button" onClick={() => navigate("/login")}>Sign in</button>
           <button type="button" className="active">Sign up</button>
         </div>
-
         <form onSubmit={onSubmit} className="auth-form">
           {error && <div className="auth-error">{error}</div>}
-
           <div className="auth-field">
             <label className="auth-label" htmlFor="register-name">Full name</label>
             <input
@@ -56,7 +49,6 @@ export const Register = () => {
               required
             />
           </div>
-
           <div className="auth-field">
             <label className="auth-label" htmlFor="register-email">Email</label>
             <input
@@ -69,38 +61,36 @@ export const Register = () => {
               required
             />
           </div>
-
           <div className="auth-field">
             <label className="auth-label" htmlFor="register-password">Password</label>
             <input
               id="register-password"
               className="auth-input"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder="At least 6 characters"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
               minLength={6}
             />
           </div>
-
           <div className="auth-field">
             <label className="auth-label" htmlFor="register-role">Role</label>
             <select
               id="register-role"
               className="auth-select"
               value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value as any })}
+              onChange={(e) =>
+                setForm({ ...form, role: e.target.value as "farmer" | "buyer" })
+              }
             >
               <option value="farmer">Farmer</option>
-              <option value="buyer">Buyer</option>
+              <option value="buyer">Equipment Owner</option>
             </select>
           </div>
-
           <button type="submit" className="auth-button" disabled={busy}>
             {busy ? "Creating account..." : "Create account"}
           </button>
-
           <p className="auth-link">
             Already have an account? <Link to="/login">Sign in</Link>
           </p>

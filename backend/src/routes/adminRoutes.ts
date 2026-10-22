@@ -1,17 +1,17 @@
-import { Router } from 'express'
-import { requireAdmin } from '../middleware/adminAuth'
+import { Router } from "express";
 import {
   listPendingEquipment,
   approveEquipment,
   rejectEquipment,
-} from '../controllers/adminEquipmentController'
+} from "../controllers/adminEquipmentController";
+import { requireAuth, requireRole } from "../middleware/auth.middleware";
 
-const router = Router()
+const router = Router();
 
-router.use(requireAdmin)
+router.use(requireAuth, requireRole("ADMIN"));
 
-router.get('/equipment/pending',         listPendingEquipment)
-router.patch('/equipment/:id/approve',   approveEquipment)
-router.patch('/equipment/:id/reject',    rejectEquipment)
+router.get("/equipment/pending", listPendingEquipment);
+router.patch("/equipment/:id/approve", approveEquipment);
+router.patch("/equipment/:id/reject", rejectEquipment);
 
-export default router
+export default router;
