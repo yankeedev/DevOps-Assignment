@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 // Stable seed IDs — fixed strings ensure upsert is idempotent across runs.
+const ADMIN_ID    = 'seed_user_admin'
 const FARMER_1_ID = 'seed_user_jean_claude'
 const FARMER_2_ID = 'seed_user_alice_uwase'
 
@@ -27,7 +28,21 @@ async function main() {
   // This is a placeholder hash for seed/dev use only. Never use in production.
   const devPasswordHash = await bcrypt.hash('Dev@Seed2024!', 10)
 
-  // ── 2. Upsert farmers ────────────────────────────────────────────────────────
+  // ── 2. Upsert admin ─────────────────────────────────────────────────────────
+  const admin = await prisma.user.upsert({
+    where:  { id: ADMIN_ID },
+    update: {},
+    create: {
+      id:           ADMIN_ID,
+      name:         'Admin User',
+      email:        'admin@agrirent.com',
+      passwordHash: devPasswordHash,
+      role:         'ADMIN',
+    },
+  })
+  console.log(`✓ Admin: ${admin.name} (id: ${admin.id})\n`)
+
+  // ── 3. Upsert farmers ────────────────────────────────────────────────────────
   // NOTE: Equipment.ownerId is a FK to User with no DB-level role restriction.
   // The API layer enforces EQUIPMENT_OWNER role, but the seed writes directly
   // via Prisma, bypassing that check. These farmers act as equipment owners
