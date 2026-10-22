@@ -48,12 +48,6 @@ export default function AdminPage() {
       <header className="bg-[#1B5E20] px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-[#FFFFFF]">AgriRent — Admin</h1>
-          <a
-            href="/"
-            className="text-sm text-[#A5D6A7] hover:text-[#FFFFFF] font-medium transition-colors"
-          >
-            ← Browse Equipment
-          </a>
         </div>
       </header>
 
