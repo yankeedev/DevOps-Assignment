@@ -109,7 +109,7 @@ DevOps-Assignment/
 │       │   ├── adminService.ts
 │       │   └── equipmentService.ts
 │       └── types/
-│           └── equipment.ts
+           └── equipment.ts
 ```
 
 ## Getting Started
