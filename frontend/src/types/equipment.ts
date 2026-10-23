@@ -28,5 +28,4 @@ export interface AddEquipmentPayload {
   imageUrl:    string
   district:    string
   sector:      string
-  ownerId:     string
 }

@@ -3,7 +3,6 @@ import { addEquipment } from '../services/equipmentService'
 import type { AddEquipmentPayload, OwnerEquipment } from '../types/equipment'
 
 interface Props {
-  ownerId: string
   onSuccess: (equipment: OwnerEquipment) => void
   onCancel: () => void
 }
@@ -18,14 +17,14 @@ const DISTRICTS = [
   'Rulindo', 'Rusizi', 'Rutsiro', 'Rwamagana',
 ]
 
-type FormState = Omit<AddEquipmentPayload, 'ownerId'>
+type FormState = AddEquipmentPayload
 
 const empty: FormState = {
   name: '', description: '', category: '', dailyPrice: '',
   imageUrl: '', district: '', sector: '',
 }
 
-export default function AddEquipmentForm({ ownerId, onSuccess, onCancel }: Props) {
+export default function AddEquipmentForm({ onSuccess, onCancel }: Props) {
   const [form, setForm]       = useState<FormState>(empty)
   const [errors, setErrors]   = useState<Partial<FormState>>({})
   const [loading, setLoading] = useState(false)
@@ -57,7 +56,7 @@ export default function AddEquipmentForm({ ownerId, onSuccess, onCancel }: Props
     setLoading(true)
     setApiError(null)
     try {
-      const created = await addEquipment({ ...form, ownerId })
+      const created = await addEquipment(form)
       onSuccess(created)
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Submission failed. Please try again.')
