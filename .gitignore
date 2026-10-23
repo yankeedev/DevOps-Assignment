@@ -21,4 +21,3 @@ frontend/dist/
 # Backend build
 backend/dist/
 
-DATABASE_URL=postgresql://neondb_owner:npg_rSJWcvgw4sL0@ep-holy-night-b5uledwc-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
