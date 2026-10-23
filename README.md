@@ -17,6 +17,15 @@ AgriRent is a web-based agricultural marketplace and linkage platform that conne
 
 The platform simplifies the rental process by allowing farmers to search for tools by location, compare options, send booking requests, and coordinate payment and collection directly with equipment owners. By promoting equipment sharing and improving access to farm supplies, AgriRent helps reduce costs for smallholder farmers while creating income opportunities for equipment owners.
 
+## Value Proposition
+
+AgriRent creates tangible value for smallholder farmers, equipment owners, and agricultural businesses by reducing equipment access barriers and improving local market visibility.
+
+- **For Farmers:** Access affordable machinery and farm inputs without the high upfront cost of ownership.
+- **For Equipment Owners:** Unlock income from underutilized equipment and create a dependable rental marketplace.
+- **For Local Supply Shops:** Increase discoverability among nearby farmers who need inputs, tools, and services.
+- **For the Agricultural Ecosystem:** Promote resource sharing, efficiency, and stronger rural value chains.
+
 ### Target Users
 
 - **Smallholder Farmers** – Farmers who need access to agricultural equipment for short-term use or want to find nearby seeds and fertilizers.
@@ -41,6 +50,68 @@ The platform simplifies the rental process by allowing farmers to search for too
 - **Validation**: Zod
 - **Middleware**: Express middleware for auth, roles, and validation
 
+## Project Structure
+
+```text
+DevOps-Assignment/
+├── README.md
+├── LICENSE
+├── .gitignore
+├── backend/
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   └── seed.ts
+│   └── src/
+│       ├── index.ts
+│       ├── config/
+│       │   └── prisma.ts
+│       ├── controllers/
+│       │   ├── adminEquipmentController.ts
+│       │   ├── auth.controller.ts
+│       │   └── equipmentController.ts
+│       ├── middleware/
+│       │   ├── adminAuth.ts
+│       │   └── auth.middleware.ts
+│       └── routes/
+│           ├── adminRoutes.ts
+│           ├── auth.routes.ts
+│           └── equipmentRoutes.ts
+├── frontend/
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   ├── index.html
+│   └── src/
+│       ├── App.tsx
+│       ├── main.tsx
+│       ├── index.css
+│       ├── api/
+│       │   └── axios.ts
+│       ├── components/
+│       │   ├── AddEquipmentForm.tsx
+│       │   ├── EquipmentCard.tsx
+│       │   └── SiteHeader.tsx
+│       ├── context/
+│       │   └── AuthContext.tsx
+│       ├── pages/
+│       │   ├── AdminPage.tsx
+│       │   ├── DashboardPage.tsx
+│       │   ├── EquipmentListingPage.tsx
+│       │   ├── LandingPage.tsx
+│       │   ├── Login.tsx
+│       │   ├── ProfilePage.tsx
+│       │   └── Register.tsx
+│       ├── routes/
+│       │   └── ProtectedRoute.tsx
+│       ├── services/
+│       │   ├── adminService.ts
+│       │   └── equipmentService.ts
+│       └── types/
+│           └── equipment.ts
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -52,24 +123,24 @@ The platform simplifies the rental process by allowing farmers to search for too
 ### Installation
 
 1. Clone the repository
-`ash
+`bash
 git clone https://github.com/yankeedev/DevOps-Assignment.git
 cd DevOps-Assignment
 `
 
 2. Backend Setup
-`ash
+`bash
 cd backend
 npm install
 cp .env.example .env
-# Update DATABASE_URL in .env
+Update DATABASE_URL in .env
 npx prisma generate
 npx prisma migrate deploy
 npm run dev
 `
 
 3. Frontend Setup
-`ash
+`bash
 cd frontend
 npm install
 npm run dev
