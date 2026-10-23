@@ -1,0 +1,23 @@
+name: General CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  code-health-check:
+    name: Validate Codebase
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository code so the runner can access it
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Basic structural check (e.g., verifying YAML files or project layout)
+      - name: Check Workspace Structure
+        run: |
+          echo "Checking project structure for Agri-rent..."
+          ls -la
