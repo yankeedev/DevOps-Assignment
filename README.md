@@ -11,6 +11,8 @@ AgriRent addresses a common challenge for smallholder farmers in Rwanda and acro
 - Justine Neema - Team Member
 - Emery Barame - Project Lead
 
+## Team Task Sheet
+https://docs.google.com/spreadsheets/d/1tZTdxUlUnP9lVVAZHRMHa1DLS_oNjTHw0IlKVji9c68/edit?usp=sharing
 ## Project Overview
 
 AgriRent is a web-based agricultural marketplace and linkage platform that connects farmers who need agricultural equipment with farmers and cooperatives that have equipment available for rent. In addition to equipment rentals, the platform includes a farm supplies section to help farmers locate nearby agricultural supply shops offering machinery, fertilizers, and other farm inputs.
