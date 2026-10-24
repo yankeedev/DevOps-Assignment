@@ -61,7 +61,8 @@ cd DevOps-Assignment
 `ash
 cd backend
 npm install
-# Create .env with DATABASE_URL
+cp .env.example .env
+# Update DATABASE_URL in .env
 npx prisma generate
 npx prisma migrate deploy
 npm run dev
@@ -76,29 +77,10 @@ npm run dev
 
 ### Usage
 
-1. Open the frontend at http://localhost:5173 (or http://localhost:5174 if port 5173 is in use)
+1. Open the frontend at http://localhost:5173 or http://localhost:5174
 2. Register as a farmer or equipment owner
-3. Browse equipment rentals or the farm supplies directory
+3. Browse equipment or farm supplies
 4. Send rental requests and coordinate with owners directly
-
-## Project Structure
-
-`
-DevOps-Assignment/
-├── backend/           # Express.js + TypeScript backend (API, middleware logic)
-│   ├── src/           # Source code
-│   ├── prisma/        # Prisma schema & migrations (if present)
-│   ├── dist/          # Compiled output (ignored)
-│   └── package.json
-├── frontend/          # Vite + React + TypeScript frontend
-│   ├── src/           # Source code
-│   ├── public/        # Static assets
-│   └── package.json
-├── .gitignore
-├── README.md
-├── COLOR.md
-└── LICENSE
-`
 
 ## Task Allocation (Formative 1)
 
@@ -113,6 +95,26 @@ DevOps-Assignment/
 | Configure branch protection rules for the main branch | Emery Barame | 22/10/2026 |
 | Add a LICENSE file and configure repository settings | Emery Barame | 22/10/2026 |
 | Test the application and document local setup instructions | Justine Neema | 23/10/2026 |
+
+## Branch Protection Rules & Governance
+
+To maintain code quality, prevent breaking changes, and support seamless team collaboration, branch protection rules are enforced on the `main` branch.
+
+### Configured Protection Rules
+
+| Protection Setting | Configuration | Purpose & Collaboration Value |
+| :--- | :--- | :--- |
+| Require a pull request before merging | Enabled (1 approval required) | Ensures direct pushes to `main` are blocked. All proposed changes must be reviewed by another team member to catch potential bugs and maintain code standards. |
+| Dismiss stale pull request approvals | Enabled | Invalidates prior reviews when new commits are pushed to an open PR. Guarantees that the final merged code has been reviewed in its exact state. |
+| Require status checks to pass before merging | Enabled | Enforces that all automated CI pipeline checks (builds, linters, and unit tests) must pass successfully before code can be merged into `main`. |
+| Require branches to be up to date before merging | Enabled | Guarantees that code being merged has been tested against the latest version of `main`, preventing integration bugs or merge conflicts. |
+| Require conversation resolution before merging | Enabled | Ensures all comments, suggestions, and feedback raised during code review are fully addressed and resolved before merging. |
+
+### Why These Rules Matter for Team Collaboration
+
+1. **Quality Assurance:** Automated CI status checks ensure broken builds or failing unit tests never reach production.
+2. **Knowledge Sharing & Code Reviews:** Enforcing peer reviews allows team members to stay updated on project architecture and share domain knowledge.
+3. **Preventing Integration Drift:** Requiring branches to be up-to-date before merging reduces merge conflicts and ensures feature branches run cleanly alongside recently merged contributions.
 
 ## Links
 
