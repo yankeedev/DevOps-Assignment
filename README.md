@@ -1,8 +1,8 @@
 ﻿# AgriRent — Agricultural Equipment Rental and Farm Supplies Platform
 
-##  Context
+##  Problem Statement
 
-AgriRent addresses a common challenge for smallholder farmers in Rwanda and across Africa: the high cost of agricultural equipment. Many farmers cannot afford to buy expensive tools such as irrigation pumps, tillers, and sprayers for occasional use. At the same time, farmers and cooperatives often own equipment that sits idle between farming seasons. AgriRent bridges this gap by enabling equipment sharing and helping farmers locate nearby sellers of seeds and fertilizers, making farming more affordable and efficient.
+AgriRent addresses a common challenge for smallholder farmers in Rwanda and across Africa: the high cost of agricultural equipment. Many farmers cannot afford to buy expensive tools such as irrigation pumps, tillers, and sprayers for occasional use. At the same time, farmers and cooperatives often own equipment that sits idle between farming seasons. AgriRent bridges this gap by enabling equipment sharing and helping farmers locate nearby sellers of tools and fertilizers, making farming more affordable and efficient.
 
 ## Team Members
 
@@ -13,7 +13,7 @@ AgriRent addresses a common challenge for smallholder farmers in Rwanda and acro
 
 ## Project Overview
 
-AgriRent is a web-based agricultural marketplace and linkage platform that connects farmers who need agricultural equipment with farmers and cooperatives that have equipment available for rent. In addition to equipment rentals, the platform includes a farm supplies section to help farmers locate nearby agricultural supply shops offering seeds, fertilizers, and other farm inputs.
+AgriRent is a web-based agricultural marketplace and linkage platform that connects farmers who need agricultural equipment with farmers and cooperatives that have equipment available for rent. In addition to equipment rentals, the platform includes a farm supplies section to help farmers locate nearby agricultural supply shops offering machinery, fertilizers, and other farm inputs.
 
 The platform simplifies the rental process by allowing farmers to search for tools by location, compare options, send booking requests, and coordinate payment and collection directly with equipment owners. By promoting equipment sharing and improving access to farm supplies, AgriRent helps reduce costs for smallholder farmers while creating income opportunities for equipment owners.
 
