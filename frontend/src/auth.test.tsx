@@ -95,7 +95,7 @@ describe("AuthContext", () => {
     expect(result.current.user).toEqual(user);
   });
 
-  it("logout clears user and calls /auth/logout", async () => {
+  it("logout clears user and calls /api/auth/logout", async () => {
     const user = { id: "u1", name: "Jane", email: "j@e.com", role: "farmer" };
     mockedApi.post
       .mockResolvedValueOnce({ data: { user, accessToken: "tok" } }) // bootstrap
@@ -108,7 +108,7 @@ describe("AuthContext", () => {
       await result.current.logout();
     });
 
-    expect(mockedApi.post).toHaveBeenCalledWith("/auth/logout");
+    expect(mockedApi.post).toHaveBeenCalledWith("/api/auth/logout");
     expect(result.current.user).toBeNull();
     expect(mockedSetToken).toHaveBeenCalledWith(null);
   });
