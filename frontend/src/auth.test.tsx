@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, renderHook, act } from "@testing-library/react";
-import { MemoryRouter, MemoryRouter as Router, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ReactNode } from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { Login } from "./pages/Login";
@@ -17,7 +17,7 @@ vi.mock("./api/axios", () => ({
 
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<any>("react-router-dom");
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -86,7 +86,7 @@ describe("AuthContext", () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    let returned: any;
+    let returned: Awaited<ReturnType<typeof result.current.login>> | undefined;
     await act(async () => {
       returned = await result.current.login({ email: "j@e.com", password: "secret" });
     });
@@ -121,7 +121,7 @@ describe("ProtectedRoute", () => {
         <Routes>
           <Route path="/login" element={<div>LOGIN</div>} />
           <Route path="/dashboard" element={<div>DASHBOARD</div>} />
-          <Route path={initialPath} element={element as any} />
+          <Route path={initialPath} element={element} />
         </Routes>
       </MemoryRouter>
     );
