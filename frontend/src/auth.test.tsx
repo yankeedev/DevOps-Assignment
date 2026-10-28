@@ -197,7 +197,10 @@ describe("Login page", () => {
   it("shows backend error message on failure", async () => {
     mockedApi.post
       .mockRejectedValueOnce(new Error("no session"))
-      .mockRejectedValueOnce({ response: { data: { message: "Invalid credentials" } } });
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { data: { message: "Invalid credentials" } },
+      });
 
     renderLogin();
     await waitFor(() => expect(mockedApi.post).toHaveBeenCalled());
