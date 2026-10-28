@@ -49,6 +49,11 @@ const renderRegister = () =>
     </AuthProvider>
   );
 
+const getSubmitButton = (name: RegExp) =>
+  screen
+    .getAllByRole("button", { name })
+    .find((button) => button.getAttribute("type") === "submit");
+
 beforeEach(() => {
   vi.clearAllMocks();
   // default: bootstrap refresh fails (no session)
@@ -117,13 +122,14 @@ describe("AuthContext", () => {
 describe("ProtectedRoute", () => {
   const renderAt = (initialPath: string, element: ReactNode) =>
     render(
-      <MemoryRouter initialEntries={[initialPath]}>
-        <Routes>
-          <Route path="/login" element={<div>LOGIN</div>} />
-          <Route path="/dashboard" element={<div>DASHBOARD</div>} />
-          <Route path={initialPath} element={element} />
-        </Routes>
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <Routes>
+            <Route path="/login" element={<div>LOGIN</div>} />
+            <Route path={initialPath} element={element} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
     );
 
   it("redirects to /login when no user", () => {
@@ -141,9 +147,7 @@ describe("ProtectedRoute", () => {
 
     renderAt(
       "/dashboard",
-      <AuthProvider>
-        <ProtectedRoute><div>SECRET</div></ProtectedRoute>
-      </AuthProvider>
+      <ProtectedRoute><div>SECRET</div></ProtectedRoute>
     );
 
     expect(await screen.findByText("SECRET")).toBeInTheDocument();
@@ -155,10 +159,10 @@ describe("Login page", () => {
     renderLogin();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    expect(getSubmitButton(/sign in/i)).toBeInTheDocument();
   });
 
-  it("navigates to /dashboard for a farmer", async () => {
+  it("navigates to /profile after a successful farmer login", async () => {
     const user = { id: "u1", name: "Jane", email: "j@e.com", role: "farmer" };
     mockedApi.post
       .mockRejectedValueOnce(new Error("no session"))            // bootstrap
@@ -169,12 +173,12 @@ describe("Login page", () => {
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "j@e.com" } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "secret123" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.click(getSubmitButton(/sign in/i)!);
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/profile", { replace: true }));
   });
 
-  it("navigates to /admin for an admin", async () => {
+  it("navigates to /profile after a successful admin login", async () => {
     const user = { id: "u1", name: "Admin", email: "a@e.com", role: "admin" };
     mockedApi.post
       .mockRejectedValueOnce(new Error("no session"))
@@ -185,9 +189,9 @@ describe("Login page", () => {
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "a@e.com" } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "secret123" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.click(getSubmitButton(/sign in/i)!);
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/admin", { replace: true }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/profile", { replace: true }));
   });
 
   it("shows backend error message on failure", async () => {
@@ -200,7 +204,7 @@ describe("Login page", () => {
 
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "j@e.com" } });
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong" } });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.click(getSubmitButton(/sign in/i)!);
 
     expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();
   });
@@ -215,7 +219,7 @@ describe("Register page", () => {
     expect(screen.getByLabelText(/role/i)).toBeInTheDocument();
   });
 
-  it("navigates to /dashboard after successful registration", async () => {
+  it("navigates to /profile after successful registration", async () => {
     const user = { id: "u2", name: "John", email: "john@e.com", role: "farmer" };
     mockedApi.post
       .mockRejectedValueOnce(new Error("no session"))
@@ -229,6 +233,6 @@ describe("Register page", () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "secret123" } });
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/profile", { replace: true }));
   });
 });
