@@ -93,6 +93,8 @@ describe("AuthContext", () => {
 
     expect(returned).toEqual(user);
     expect(result.current.user).toEqual(user);
+    expect(localStorage.getItem("agrirent-user")).toBe(JSON.stringify(user));
+    expect(localStorage.getItem("agrirent-access-token")).toBe("tok");
   });
 
   it("logout clears user and calls /auth/logout", async () => {

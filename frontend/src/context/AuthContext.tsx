@@ -32,6 +32,43 @@ interface AuthContextValue {
   logout: () => Promise<void>;
 }
 
+const USER_STORAGE_KEY = "agrirent-user";
+const TOKEN_STORAGE_KEY = "agrirent-access-token";
+
+const persistSession = (user: User | null, accessToken: string | null) => {
+  if (typeof window === "undefined") return;
+
+  if (user && accessToken) {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+    return;
+  }
+
+  localStorage.removeItem(USER_STORAGE_KEY);
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+};
+
+const loadStoredSession = () => {
+  if (typeof window === "undefined") return { user: null as User | null, accessToken: null as string | null };
+
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+  if (!storedUser || !storedToken) {
+    return { user: null, accessToken: null };
+  }
+
+  try {
+    return {
+      user: JSON.parse(storedUser) as User,
+      accessToken: storedToken,
+    };
+  } catch {
+    persistSession(null, null);
+    return { user: null, accessToken: null };
+  }
+};
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -40,12 +77,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
+      const storedSession = loadStoredSession();
+      if (storedSession.user && storedSession.accessToken) {
+        setAccessToken(storedSession.accessToken);
+        setUser(storedSession.user);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { data } = await api.post("/api/auth/refresh");
         setAccessToken(data.accessToken);
         setUser(data.user);
+        persistSession(data.user, data.accessToken);
       } catch {
         setUser(null);
+        setAccessToken(null);
+        persistSession(null, null);
       } finally {
         setLoading(false);
       }
@@ -54,22 +102,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (input: LoginInput): Promise<User> => {
     const { data } = await api.post("/api/auth/login", input);
-    setAccessToken(data.accessToken);
-    setUser(data.user);
-    return data.user as User;
+    const nextUser = data.user as User;
+    const nextToken = data.accessToken as string;
+    setAccessToken(nextToken);
+    setUser(nextUser);
+    persistSession(nextUser, nextToken);
+    return nextUser;
   };
 
   const register = async (input: RegisterInput): Promise<User> => {
     const { data } = await api.post("/api/auth/register", input);
-    setAccessToken(data.accessToken);
-    setUser(data.user);
-    return data.user as User;
+    const nextUser = data.user as User;
+    const nextToken = data.accessToken as string;
+    setAccessToken(nextToken);
+    setUser(nextUser);
+    persistSession(nextUser, nextToken);
+    return nextUser;
   };
 
   const logout = async () => {
     await api.post("/api/auth/logout");
     setAccessToken(null);
     setUser(null);
+    persistSession(null, null);
   };
 
   return (

@@ -1,9 +1,9 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
-const backendBaseUrl = import.meta.env.VITE_API_URL || "";
+const backendBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const api = axios.create({
-  baseURL: backendBaseUrl || undefined,
+  baseURL: backendBaseUrl,
   withCredentials: true,
 });
 
