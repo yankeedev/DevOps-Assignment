@@ -5,9 +5,6 @@ FROM node:22-bookworm-slim AS frontend-build
 
 WORKDIR /app/frontend
 
-ARG VITE_API_URL=http://localhost:5000
-ENV VITE_API_URL=$VITE_API_URL
-
 # copy and install frontend dependencies
 COPY frontend/package*.json ./
 RUN npm ci
@@ -38,7 +35,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=5000
-ENV CLIENT_URL=http://localhost:4173
 
 # install curl for health-checks and create a non-root user for security
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
@@ -51,7 +47,6 @@ COPY --from=backend-build /app/backend/package*.json ./backend/
 COPY --from=backend-build /app/backend/node_modules ./backend/node_modules
 COPY --from=backend-build /app/backend/dist ./backend/dist
 COPY --from=backend-build /app/backend/prisma ./backend/prisma
-COPY backend/.env ./backend/.env
 
 # copy the built frontend bundle 
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
@@ -70,4 +65,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -fsS http://localhost:5000/health || exit 1
 
 # Start service in the same container
-CMD ["sh", "-c", "node /app/backend/dist/index.js & serve -s /app/frontend/dist -l 4173 & wait"]
+CMD ["sh", "-c", "node /app/backend/dist/index.js & serve -s /app/frontend/dist -l 4173 & wait"]# syntax=docker/dockerfile:1
+

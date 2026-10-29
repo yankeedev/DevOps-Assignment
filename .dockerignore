@@ -4,10 +4,10 @@ dist
 **/dist
 build
 coverage
+.env
+**/.env
 .git
 *.log
 .vscode
 .idea
 .DS_Store
-!backend/.env
-!backend/.env.example
