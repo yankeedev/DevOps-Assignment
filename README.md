@@ -57,26 +57,31 @@ The platform simplifies the rental process by allowing farmers to search for too
 
 ```text
 DevOps-Assignment/
-├── Dockerfile                        # Multi-stage production container build
-├── docker-compose.yml                # Orchestrates app + PostgreSQL services
-├── .dockerignore                     # Excludes node_modules, dist, .env from build context
+├── .dockerignore
+├── .env.example
+├── .gitignore
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                    # CI pipeline: lint, test, build, Docker build
-├── README.md
+│       ├── ci.yml
+│       └── main.yml
+├── COLOR.md
+├── docker-compose.yml
+├── Dockerfile
 ├── LICENSE
-├── .gitignore
+├── README.md
 ├── backend/
-│   ├── package.json
-│   ├── tsconfig.json
+│   ├── .env.example
 │   ├── eslint.config.mjs
 │   ├── jest.config.js
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── test.ts
+│   ├── tsconfig.json
 │   ├── prisma/
 │   │   ├── schema.prisma
 │   │   └── seed.ts
 │   └── src/
 │       ├── index.ts
-│       ├── server.ts
 │       ├── config/
 │       │   └── prisma.ts
 │       ├── controllers/
@@ -91,17 +96,24 @@ DevOps-Assignment/
 │           ├── auth.routes.ts
 │           └── equipmentRoutes.ts
 └── frontend/
+    ├── eslint.config.ts
+    ├── index.html
+    ├── package-lock.json
     ├── package.json
+    ├── postcss.config.js
+    ├── stylelint.config.mjs
+    ├── tailwind.config.js
+    ├── tsconfig.app.json
+    ├── tsconfig.json
+    ├── tsconfig.node.json
     ├── vite.config.ts
     ├── vitest.config.ts
-    ├── tailwind.config.js
-    ├── eslint.config.ts
-    ├── stylelint.config.mjs
-    ├── index.html
     └── src/
         ├── App.tsx
-        ├── main.tsx
+        ├── auth.test.tsx
         ├── index.css
+        ├── main.tsx
+        ├── test-setup.ts
         ├── api/
         │   └── axios.ts
         ├── components/
@@ -122,8 +134,8 @@ DevOps-Assignment/
         │   └── ProtectedRoute.tsx
         ├── services/
         │   ├── adminService.ts
-        │   ├── equipmentService.ts
-        │   └── equipmentService.test.ts
+        │   ├── equipmentService.test.ts
+        │   └── equipmentService.ts
         └── types/
             └── equipment.ts
 ```
