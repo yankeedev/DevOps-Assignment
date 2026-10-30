@@ -55,7 +55,9 @@ const getSubmitButton = (name: RegExp) =>
     .find((button) => button.getAttribute("type") === "submit");
 
 beforeEach(() => {
+  localStorage.clear();
   vi.clearAllMocks();
+  mockNavigate.mockClear();
   // default: bootstrap refresh fails (no session)
   mockedApi.post.mockRejectedValue(new Error("no session"));
 });
@@ -98,6 +100,8 @@ describe("AuthContext", () => {
 
     expect(returned).toEqual(user);
     expect(result.current.user).toEqual(user);
+    expect(localStorage.getItem("agrirent-user")).toBe(JSON.stringify(user));
+    expect(localStorage.getItem("agrirent-access-token")).toBe("tok");
   });
 
   it("logout clears user and calls /api/auth/logout", async () => {
@@ -132,13 +136,17 @@ describe("ProtectedRoute", () => {
       </AuthProvider>
     );
 
-  it("redirects to /login when no user", () => {
+  it("redirects to /login when no user", async () => {
     mockedApi.post.mockRejectedValue(new Error("no session"));
 
-    renderAt("/dashboard", <ProtectedRoute><div>SECRET</div></ProtectedRoute>);
+    renderAt(
+      "/dashboard",
+      <AuthProvider>
+        <ProtectedRoute><div>SECRET</div></ProtectedRoute>
+      </AuthProvider>
+    );
 
-    // AuthProvider bootstraps async; wait for loading false then redirect
-    return waitFor(() => expect(screen.getByText("LOGIN")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("LOGIN")).toBeInTheDocument());
   });
 
   it("renders children for a logged-in user", async () => {

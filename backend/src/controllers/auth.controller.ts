@@ -11,9 +11,11 @@ const ACCESS_EXPIRES = (process.env.JWT_ACCESS_EXPIRES || "15m") as SignOptions[
 const REFRESH_EXPIRES = (process.env.JWT_REFRESH_EXPIRES || "7d") as SignOptions["expiresIn"];
 const IS_PROD = process.env.NODE_ENV === "production";
 
+const useSecureCookies = IS_PROD && !!process.env.CLIENT_URL?.startsWith("https://");
+
 const cookieOptions = {
   httpOnly: true,
-  secure: IS_PROD,
+  secure: useSecureCookies,
   sameSite: "lax" as const,
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
@@ -150,7 +152,11 @@ export const refresh = async (req: Request, res: Response) => {
 };
 
 export const logout = (_req: Request, res: Response) => {
-  res.clearCookie("refreshToken", { httpOnly: true, secure: IS_PROD, sameSite: "lax" });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: useSecureCookies,
+    sameSite: "lax",
+  });
   return res.json({ message: "Logged out" });
 };
 

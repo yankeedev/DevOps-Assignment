@@ -38,7 +38,7 @@ export const Register = () => {
       <div className="auth-card">
         <h1 className="auth-title">Create account</h1>
         <div className="auth-switch">
-          <button type="button" onClick={() => navigate("/login")}>Sign in</button>
+          <button type="button" onClick={() => navigate("/login")}>Email sign in</button>
           <button type="button" className="active">Sign up</button>
         </div>
         <form onSubmit={onSubmit} className="auth-form">
