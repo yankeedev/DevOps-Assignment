@@ -38,14 +38,25 @@ describe('equipmentService', () => {
     mockPost.mockResolvedValueOnce({ data: { data: { id: '3', name: 'Seeder', status: 'pending' } } })
 
     await expect(
-      addEquipment({ name: 'Seeder', category: 'Planting', quantity: 2, pricePerDay: 100 }),
+      addEquipment({
+        name: 'Seeder',
+        description: 'Two-row seed drill',
+        category: 'Seeder',
+        dailyPrice: '100',
+        imageUrl: '',
+        district: 'Gasabo',
+        sector: 'Kimironko',
+      }),
     ).resolves.toEqual({ id: '3', name: 'Seeder', status: 'pending' })
 
     expect(mockPost).toHaveBeenCalledWith('/api/equipment', {
       name: 'Seeder',
-      category: 'Planting',
-      quantity: 2,
-      pricePerDay: 100,
+      description: 'Two-row seed drill',
+      category: 'Seeder',
+      dailyPrice: '100',
+      imageUrl: '',
+      district: 'Gasabo',
+      sector: 'Kimironko',
     })
   })
 })

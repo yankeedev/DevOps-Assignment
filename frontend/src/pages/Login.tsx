@@ -1,3 +1,4 @@
+import axios from "axios";
 import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -15,11 +16,14 @@ export const Login = () => {
     setError(null);
     setBusy(true);
     try {
-      const user = await login({ email, password });
-      const destination = user.role === "admin" ? "/admin" : "/dashboard";
-      navigate(destination, { replace: true });
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
+      await login({ email, password });
+      navigate("/profile", { replace: true });
+    } catch (err: unknown) {
+      setError(
+        axios.isAxiosError<{ message?: string }>(err)
+          ? err.response?.data?.message || "Login failed"
+          : "Login failed"
+      );
     } finally {
       setBusy(false);
     }
@@ -63,7 +67,7 @@ export const Login = () => {
             {busy ? "Logging in..." : "Sign in"}
           </button>
           <p className="auth-link">
-            Don't have an account? <Link to="/register">Sign up</Link>
+            Don&apos;t have an account? <Link to="/register">Sign up</Link>
           </p>
         </form>
       </div>

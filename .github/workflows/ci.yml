@@ -1,0 +1,69 @@
+name: AgriRent CI
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install temporary backend lint tools
+        run: npm install --no-save --package-lock=false eslint@^9 @eslint/js@^9 globals typescript-eslint
+        working-directory: backend
+
+      - name: Lint backend TypeScript
+        run: npx eslint src
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install temporary lint tools
+        run: npm install --no-save --package-lock=false eslint@^9 @eslint/js@^9 globals typescript-eslint eslint-plugin-react jiti stylelint stylelint-config-standard
+        working-directory: frontend
+
+      - name: Lint TypeScript and CSS
+        run: |
+          npx eslint src
+          npx stylelint "src/**/*.css"
+        working-directory: frontend
+
+      - name: Run frontend tests
+        run: npm test
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Build backend
+        run: npm run build
+        working-directory: backend
+
+      - name: Build Docker image
+        if: hashFiles('Dockerfile') != ''
+        run: docker build -t my-app:ci .
+
