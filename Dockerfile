@@ -65,5 +65,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -fsS http://localhost:5000/health || exit 1
 
 # Start service in the same container
-CMD ["sh", "-c", "node /app/backend/dist/index.js & serve -s /app/frontend/dist -l 4173 & wait"]# syntax=docker/dockerfile:1
+CMD ["sh", "-c", "node /app/backend/dist/index.js & serve -s /app/frontend/dist -l 4173 & wait"]
 
