@@ -15,8 +15,9 @@ export const Login = () => {
     setError(null);
     setBusy(true);
     try {
-      await login({ email, password });
-      navigate("/profile", { replace: true });
+      const user = await login({ email, password });
+      const destination = user.role === "admin" ? "/admin" : "/dashboard";
+      navigate(destination, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed");
     } finally {
@@ -29,7 +30,7 @@ export const Login = () => {
       <div className="auth-card">
         <h1 className="auth-title">Welcome back</h1>
         <div className="auth-switch">
-          <button type="button" className="active">Sign in</button>
+          <button type="button" className="active">Email login</button>
           <button type="button" onClick={() => navigate("/register")}>Sign up</button>
         </div>
         <form onSubmit={onSubmit} className="auth-form">

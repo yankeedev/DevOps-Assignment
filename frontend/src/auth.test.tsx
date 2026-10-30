@@ -50,7 +50,9 @@ const renderRegister = () =>
   );
 
 beforeEach(() => {
+  localStorage.clear();
   vi.clearAllMocks();
+  mockNavigate.mockClear();
   // default: bootstrap refresh fails (no session)
   mockedApi.post.mockRejectedValue(new Error("no session"));
 });
@@ -122,19 +124,23 @@ describe("ProtectedRoute", () => {
       <MemoryRouter initialEntries={[initialPath]}>
         <Routes>
           <Route path="/login" element={<div>LOGIN</div>} />
-          <Route path="/dashboard" element={<div>DASHBOARD</div>} />
           <Route path={initialPath} element={element as any} />
+          <Route path="/dashboard" element={<div>DASHBOARD</div>} />
         </Routes>
       </MemoryRouter>
     );
 
-  it("redirects to /login when no user", () => {
+  it("redirects to /login when no user", async () => {
     mockedApi.post.mockRejectedValue(new Error("no session"));
 
-    renderAt("/dashboard", <ProtectedRoute><div>SECRET</div></ProtectedRoute>);
+    renderAt(
+      "/dashboard",
+      <AuthProvider>
+        <ProtectedRoute><div>SECRET</div></ProtectedRoute>
+      </AuthProvider>
+    );
 
-    // AuthProvider bootstraps async; wait for loading false then redirect
-    return waitFor(() => expect(screen.getByText("LOGIN")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("LOGIN")).toBeInTheDocument());
   });
 
   it("renders children for a logged-in user", async () => {

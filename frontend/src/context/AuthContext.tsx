@@ -34,6 +34,9 @@ interface AuthContextValue {
 
 const USER_STORAGE_KEY = "agrirent-user";
 const TOKEN_STORAGE_KEY = "agrirent-access-token";
+const AUTH_PATH = "/auth";
+
+const authUrl = (endpoint: string) => `${AUTH_PATH}${endpoint}`;
 
 const persistSession = (user: User | null, accessToken: string | null) => {
   if (typeof window === "undefined") return;
@@ -86,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const { data } = await api.post("/api/auth/refresh");
+        const { data } = await api.post(authUrl("/refresh"));
         setAccessToken(data.accessToken);
         setUser(data.user);
         persistSession(data.user, data.accessToken);
@@ -101,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (input: LoginInput): Promise<User> => {
-    const { data } = await api.post("/api/auth/login", input);
+    const { data } = await api.post(authUrl("/login"), input);
     const nextUser = data.user as User;
     const nextToken = data.accessToken as string;
     setAccessToken(nextToken);
@@ -111,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (input: RegisterInput): Promise<User> => {
-    const { data } = await api.post("/api/auth/register", input);
+    const { data } = await api.post(authUrl("/register"), input);
     const nextUser = data.user as User;
     const nextToken = data.accessToken as string;
     setAccessToken(nextToken);
@@ -121,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await api.post("/api/auth/logout");
+    await api.post(authUrl("/logout"));
     setAccessToken(null);
     setUser(null);
     persistSession(null, null);

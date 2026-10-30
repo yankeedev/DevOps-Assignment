@@ -19,8 +19,9 @@ export const Register = () => {
     setError(null);
     setBusy(true);
     try {
-      await register(form);
-      navigate("/profile", { replace: true });
+      const user = await register(form);
+      const destination = user.role === "admin" ? "/admin" : "/dashboard";
+      navigate(destination, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || "Registration failed");
     } finally {
@@ -33,7 +34,7 @@ export const Register = () => {
       <div className="auth-card">
         <h1 className="auth-title">Create account</h1>
         <div className="auth-switch">
-          <button type="button" onClick={() => navigate("/login")}>Sign in</button>
+          <button type="button" onClick={() => navigate("/login")}>Email sign in</button>
           <button type="button" className="active">Sign up</button>
         </div>
         <form onSubmit={onSubmit} className="auth-form">

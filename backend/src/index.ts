@@ -43,6 +43,7 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", message: "AgriRent API is running" });
 });
 
+app.use("/auth", authRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/admin", adminRoutes);
