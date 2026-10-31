@@ -107,7 +107,7 @@ DevOps-Assignment/
     ├── tsconfig.json
     ├── tsconfig.node.json
     ├── vite.config.ts
-    ├── vitest.config.ts
+    └── vitest.config.ts
     └── src/
         ├── App.tsx
         ├── auth.test.tsx
@@ -242,7 +242,7 @@ npm run dev
 | Service | URL |
 |---|---|
 | Frontend | http://localhost:5173 |
-| Backend API | http://localhost:3002 |
+| Backend API | http://localhost:5000 |
 
 ---
 
