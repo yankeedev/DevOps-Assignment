@@ -66,6 +66,10 @@ jobs:
         run: npm ci
         working-directory: ${{ matrix.working-directory }}
 
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+        working-directory: ${{ matrix.working-directory }}
+
       - name: Lint tools
         if: matrix.lint-tools != ''
         run: npm install --no-save --package-lock=false ${{ matrix.lint-tools }}
@@ -95,8 +99,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v7
 
-      - name: Run Dependency Scan (Node.js example) #checks npm packages
-        run: npm audit --audit-level=high
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
         run: docker build -t my-app:ci .
