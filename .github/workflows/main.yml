@@ -95,6 +95,20 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v7
 
-      - name: Build Docker image
-        if: hashFiles('Dockerfile') != ''
-        run: docker build -t my-app:ci .
+      - name: Run Dependency Scan (Node.js example) #checks npm packages
+        run: npm audit --audit-level=high
+       -name: Build Docker image
+
+
+       if: hashFiles('Dockerfile') != ''
+       run: docker build -t my-app:ci .
+
+       -name: Run Trivy Container Scan   #container scan
+       if: hashFiles('Dockerfile') != ''
+       uses: aquasecurity/trivy-action@v0.28.0
+       with:
+        image: 'my-app:ci'
+        format: 'table'
+        severity: 'CRITICAL,HIGH'
+        ignore-unfixed: true
+        exit-code: '1'
