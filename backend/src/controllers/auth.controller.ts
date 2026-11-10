@@ -98,7 +98,7 @@ export const register = async (req: Request, res: Response) => {
     return sendSession(res, user, 201);
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ message: "Validation failed", errors: err.errors });
+      return res.status(400).json({ message: "Validation failed", errors: err.issues });
     }
     return res.status(500).json({
       message: err instanceof Error ? err.message : "Registration failed",
@@ -124,7 +124,7 @@ export const login = async (req: Request, res: Response) => {
     return sendSession(res, user);
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ message: "Validation failed", errors: err.errors });
+      return res.status(400).json({ message: "Validation failed", errors: err.issues });
     }
     return res.status(500).json({
       message: err instanceof Error ? err.message : "Login failed",
