@@ -40,7 +40,9 @@ ENV PORT=5000
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
     groupadd --system app && useradd --system --gid app --create-home --home-dir /home/app app && \
     mkdir -p /app/backend /app/frontend && \
-    chown -R app:app /app
+    chown -R app:app /app && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 # Copy the built backend files and runtime dependencies
 COPY --from=backend-build /app/backend/package*.json ./backend/
@@ -50,9 +52,6 @@ COPY --from=backend-build /app/backend/prisma ./backend/prisma
 
 # copy the built frontend bundle 
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
-
-# install the frontend static serve globally
-RUN npm install -g serve
 
 # switch to a non-root user before runtime
 USER app
@@ -64,6 +63,6 @@ EXPOSE 5000 4173
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -fsS http://localhost:5000/health || exit 1
 
-# Start service in the same container
-CMD ["sh", "-c", "node /app/backend/dist/index.js & serve -s /app/frontend/dist -l 4173 & wait"]
+# Start the API and frontend static server
+CMD ["node", "/app/backend/dist/index.js"]
 
