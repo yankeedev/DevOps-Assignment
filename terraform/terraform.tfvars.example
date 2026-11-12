@@ -1,5 +1,4 @@
-# Copy to terraform.tfvars and replace placeholders.
-# Never commit terraform.tfvars or credentials.
+
 
 project_name = "my-application"
 environment  = "dev"
@@ -14,8 +13,5 @@ key_pair_name = "REPLACE_WITH_EXISTING_EC2_KEY_PAIR_NAME"
 ssh_allowed_cidr = "REPLACE_WITH_YOUR_PUBLIC_IP/32"
 
 # Set the image and ports to match your application.
-app_image      = "REPLACE_WITH_PUBLIC_IMAGE:TAG"
-app_port       = 8000
-container_port = 8000
 
 root_volume_size = 20
