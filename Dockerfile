@@ -40,7 +40,9 @@ ENV PORT=5000
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
     groupadd --system app && useradd --system --gid app --create-home --home-dir /home/app app && \
     mkdir -p /app/backend /app/frontend && \
-    chown -R app:app /app
+    chown -R app:app /app && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 # Copy the built backend files and runtime dependencies
 COPY --from=backend-build /app/backend/package*.json ./backend/

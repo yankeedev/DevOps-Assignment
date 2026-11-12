@@ -38,14 +38,22 @@ export default function AddEquipmentForm({ onSuccess, onCancel }: Props) {
 
   function validate(): boolean {
     const e: Partial<FormState> = {}
-    if (!form.name.trim())        e.name        = 'Tool name is required'
-    if (!form.description.trim()) e.description = 'Description is required'
-    if (!form.category)           e.category    = 'Category is required'
-    if (!form.district)           e.district    = 'District is required'
-    if (!form.sector.trim())      e.sector      = 'Sector is required'
-    const price = parseFloat(form.dailyPrice)
-    if (!form.dailyPrice || isNaN(price) || price <= 0)
+    const name = (form.name ?? '').trim()
+    const description = (form.description ?? '').trim()
+    const sector = (form.sector ?? '').trim()
+    const priceValue = form.dailyPrice ?? ''
+
+    if (!name) e.name = 'Tool name is required'
+    if (!description) e.description = 'Description is required'
+    if (!form.category) e.category = 'Category is required'
+    if (!form.district) e.district = 'District is required'
+    if (!sector) e.sector = 'Sector is required'
+
+    const price = parseFloat(priceValue)
+    if (!priceValue || Number.isNaN(price) || price <= 0) {
       e.dailyPrice = 'Enter a valid daily price greater than 0'
+    }
+
     setErrors(e)
     return Object.keys(e).length === 0
   }

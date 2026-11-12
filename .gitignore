@@ -20,4 +20,17 @@ frontend/dist/
 
 # Backend build
 backend/dist/
+.terraform.tfvars
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+
+# Keep example variable files
+!*.tfvars.example
 

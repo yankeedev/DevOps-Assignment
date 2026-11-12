@@ -21,11 +21,13 @@ export interface OwnerEquipment extends PublicEquipment {
 }
 
 export interface AddEquipmentPayload {
-  name:        string
-  description: string
-  category:    string
-  dailyPrice:  string
-  imageUrl:    string
-  district:    string
-  sector:      string
+  name?:        string
+  description?: string
+  category?:    string
+  dailyPrice?:  string
+  pricePerDay?: number | string
+  quantity?:    number
+  imageUrl?:    string
+  district?:    string
+  sector?:      string
 }
