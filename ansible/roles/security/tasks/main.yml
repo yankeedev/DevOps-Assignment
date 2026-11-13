@@ -1,0 +1,97 @@
+---
+
+- name: Firewalld - ensure SSH service is allowed in public zone
+  ansible.posix.firewalld:
+    service: ssh
+    zone: public
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Firewalld - open application ports (excluding 22, handled above)
+  ansible.posix.firewalld:
+    port: "{{ item }}/tcp"
+    zone: public
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: "{{ firewall_allowed_tcp | difference(['22', 22]) }}"
+
+- name: Ensure sshd drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Remove legacy 99- drop-in (superseded by 00-)
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/99-agrirent-hardening.conf
+    state: absent
+
+- name: Deploy SSH hardening drop-in
+  ansible.builtin.template:
+    src: sshd_hardening.j2
+    dest: /etc/ssh/sshd_config.d/00-agrirent-hardening.conf
+    owner: root
+    group: root
+    mode: "0600"
+    validate: "sshd -t -f %s"
+  register: sshd_hardening
+
+- name: Restart sshd if hardening config changed
+  ansible.builtin.systemd:
+    name: sshd
+    state: restarted
+  when: sshd_hardening.changed
+
+- name: Verify SSH is reachable after hardening
+  ansible.builtin.wait_for_connection:
+    timeout: 30
+    delay: 2
+  when: sshd_hardening.changed
+
+- name: Read effective sshd configuration
+  ansible.builtin.command:
+    cmd: sshd -T
+  register: sshd_effective
+  changed_when: false
+
+- name: Assert hardening directives are in effect
+  ansible.builtin.assert:
+    that:
+      - "'passwordauthentication no' in sshd_effective.stdout"
+      - "'permitrootlogin no' in sshd_effective.stdout"
+      - "'maxauthtries 3' in sshd_effective.stdout"
+      - "'x11forwarding no' in sshd_effective.stdout"
+      - "'permitemptypasswords no' in sshd_effective.stdout"
+    fail_msg: >-
+      SSH hardening did not take effect. The 00- drop-in must load BEFORE
+      vendor files in /etc/ssh/sshd_config.d/. Verify:
+      (a) /etc/ssh/sshd_config has 'Include /etc/ssh/sshd_config.d/*.conf'
+          near the top,
+      (b) /etc/ssh/sshd_config.d/00-agrirent-hardening.conf exists with
+          the expected directives,
+      (c) no non-drop-in line in sshd_config AFTER the Include redefines
+          a directive we set (that would win over the 00- drop-in).
+
+- name: Install fail2ban
+  ansible.builtin.dnf:
+    name: fail2ban
+    state: present
+
+- name: Deploy fail2ban jail configuration
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart fail2ban
+
+- name: Enable and start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started

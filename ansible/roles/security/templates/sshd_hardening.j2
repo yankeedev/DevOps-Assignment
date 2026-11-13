@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+
+# Authentication
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+PermitRootLogin no
+
+# Rate limiting
+MaxAuthTries {{ ssh_max_auth_tries }}
+LoginGraceTime {{ ssh_login_grace_time }}
+MaxSessions 10
+MaxStartups 10:30:60
+
+#session timeout
+ClientAliveInterval {{ ssh_client_alive_interval }}
+ClientAliveCountMax {{ ssh_client_alive_count_max }}
+
+# Disable unnecessary features
+X11Forwarding no
+AllowAgentForwarding no
+PermitUserEnvironment no
+HostbasedAuthentication no
+IgnoreRhosts yes
+
+# Logging
+LogLevel VERBOSE

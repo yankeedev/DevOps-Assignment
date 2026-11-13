@@ -34,3 +34,5 @@ crash.*.log
 # Keep example variable files
 !*.tfvars.example
 
+# ansible
+ansible/group_vars/all/vault.yml

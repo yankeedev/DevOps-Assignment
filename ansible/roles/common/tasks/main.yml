@@ -1,0 +1,22 @@
+---
+- name: Assert target OS is RedHat family
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'RedHat'
+    fail_msg: >-
+      roles/common targets RedHat-family (Amazon Linux 2023). Detected
+      {{ ansible_facts['os_family'] }} ({{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_version'] }}).
+
+- name: Install baseline packages
+  ansible.builtin.dnf:
+    name:
+      - firewalld   
+      - python3-dnf 
+    state: present
+
+- name: Enable and start firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started

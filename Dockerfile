@@ -65,4 +65,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 # Start the API and frontend static server
 CMD ["node", "/app/backend/dist/index.js"]
-

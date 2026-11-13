@@ -1,0 +1,22 @@
+---
+- name: Configure and deploy the AgriRent application server
+  hosts: app
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+
+  pre_tasks:
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+      changed_when: false
+
+  roles:
+    - role: common
+      tags: [common]
+    - role: docker
+      tags: [docker]
+    - role: security
+      tags: [security]
+    - role: app_deploy
+      tags: [app, deploy]

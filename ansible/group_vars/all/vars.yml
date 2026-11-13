@@ -1,0 +1,36 @@
+---
+# application identity
+app_name: agrirent
+app_dir: /opt/agrirent
+
+# ports
+app_backend_port: 5000
+app_frontend_port: 4173
+
+# health check
+app_health_url: "http://127.0.0.1:5000/health"
+app_health_retries: 10
+app_health_delay: 3
+
+# firewall 
+firewall_allowed_tcp:
+  - "22"
+  - "{{ app_backend_port }}"
+  - "{{ app_frontend_port }}"
+
+# SSH hardening
+ssh_port: 22
+ssh_max_auth_tries: 3
+ssh_login_grace_time: 20
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+
+# docker deamon log rotation
+docker_log_max_size: "10m"
+docker_log_max_file: "3"
+
+# postgress database
+postgres_user: postgres
+postgres_db: agrirent
+postgres_host: db
+postgres_port: 5432
