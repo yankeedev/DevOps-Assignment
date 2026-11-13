@@ -25,9 +25,6 @@
     group: root
     mode: "0755"
 
-# Cleanup for the earlier 99- drop-in from the first failed run.
-# After this task, the host has exactly ONE AgriRent drop-in (00-), so there
-# is no stale config lingering in /etc/ssh/sshd_config.d/.
 - name: Remove legacy 99- drop-in (superseded by 00-)
   ansible.builtin.file:
     path: /etc/ssh/sshd_config.d/99-agrirent-hardening.conf

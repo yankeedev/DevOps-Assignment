@@ -1,12 +1,4 @@
 ---
-# ---------------------------------------------------------------------------
-# Common baseline: packages and services every downstream role assumes.
-#
-# This role targets Amazon Linux 2023 (dnf, systemd, firewalld). The assert
-# below fails fast if the play is somehow pointed at a Debian-family host —
-# better than a dnf failure three tasks in with a confusing message.
-# ---------------------------------------------------------------------------
-
 - name: Assert target OS is RedHat family
   ansible.builtin.assert:
     that:
@@ -19,14 +11,10 @@
 - name: Install baseline packages
   ansible.builtin.dnf:
     name:
-      - firewalld   # configured by roles/security
-      - python3-dnf # ensures ansible.builtin.dnf module works reliably
+      - firewalld   
+      - python3-dnf 
     state: present
 
-# firewalld's default public zone on AL2023 already permits the `ssh` service,
-# so enabling it here does NOT lock us out. roles/security later adds
-# 5000/4173 to the same zone. Enabling firewalld now — before roles/security
-# touches it — means a half-configured state still leaves SSH protected.
 - name: Enable and start firewalld
   ansible.builtin.systemd:
     name: firewalld

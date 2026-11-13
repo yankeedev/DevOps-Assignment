@@ -35,4 +35,4 @@ crash.*.log
 !*.tfvars.example
 
 # ansible
-ansible/group_vars/vault.yml
+ansible/group_vars/all/vault.yml

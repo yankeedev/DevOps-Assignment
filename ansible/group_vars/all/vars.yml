@@ -1,51 +1,35 @@
 ---
-# ---------------------------------------------------------------------------
-# Application identity
-# ---------------------------------------------------------------------------
+# application identity
 app_name: agrirent
 app_dir: /opt/agrirent
 
-# ---------------------------------------------------------------------------
-# Published ports — MUST match docker-compose.yml and the AWS SG ingress rules
-# AWS SG: 22 (SSH), 5000 (backend), 4173 (frontend)
-# ---------------------------------------------------------------------------
+# ports
 app_backend_port: 5000
 app_frontend_port: 4173
 
-# ---------------------------------------------------------------------------
-# Health check — from the app's own /health route
-# ---------------------------------------------------------------------------
+# health check
 app_health_url: "http://127.0.0.1:5000/health"
 app_health_retries: 10
 app_health_delay: 3
 
-# ---------------------------------------------------------------------------
-# Firewall — TCP ports opened by roles/security (firewalld on AL2023)
-# Matches AWS SG ingress exactly.
-# ---------------------------------------------------------------------------
+# firewall 
 firewall_allowed_tcp:
   - "22"
   - "{{ app_backend_port }}"
   - "{{ app_frontend_port }}"
 
-# ---------------------------------------------------------------------------
-# SSH hardening — consumed by roles/security/templates/sshd_config.j2
-# ---------------------------------------------------------------------------
+# SSH hardening
 ssh_port: 22
 ssh_max_auth_tries: 3
 ssh_login_grace_time: 20
 ssh_client_alive_interval: 300
 ssh_client_alive_count_max: 2
 
-# ---------------------------------------------------------------------------
-# Docker daemon log rotation
-# ---------------------------------------------------------------------------
+# docker deamon log rotation
 docker_log_max_size: "10m"
 docker_log_max_file: "3"
 
-# ---------------------------------------------------------------------------
-# Postgres (NON-SECRET) — password lives in vault.yml
-# ---------------------------------------------------------------------------
+# postgress database
 postgres_user: postgres
 postgres_db: agrirent
 postgres_host: db

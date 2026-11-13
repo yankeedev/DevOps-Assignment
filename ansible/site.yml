@@ -1,23 +1,4 @@
 ---
-# site.yml — full configuration and deployment for the AgriRent application server.
-#
-# Run from the ansible/ directory:
-#   ansible-playbook site.yml
-#
-# Role order rationale:
-#   common     → baseline packages, dnf cache; everything downstream needs curl
-#   docker     → install/enable Docker + Compose plugin; the app deploy needs
-#                the docker CLI and daemon already running
-#   security   → firewalld default-deny + SSH hardening; runs AFTER docker so
-#                that a misconfigured firewall surfaces on a host where sshd is
-#                already known-good, not on a freshly-installed one
-#   app_deploy → render .env from vault, copy compose file, bring up the stack,
-#                wait for the /health endpoint
-#
-# any_errors_fatal — abort the whole play on the first failure rather than
-# pushing on to the next role. A half-configured host is worse than a stopped
-# play: it looks like success to a naive check.
-
 - name: Configure and deploy the AgriRent application server
   hosts: app
   become: true

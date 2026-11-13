@@ -1,20 +1,4 @@
 ---
-# ---------------------------------------------------------------------------
-# Deploy the AgriRent stack: write .env, copy compose file, bring up services,
-# wait for /health. Uses block/rescue to capture container logs on failure.
-#
-# Idempotency:
-#   - .env is rendered via template with no_log (secrets never in ansible output)
-#   - compose file copy is content-addressed; unchanged file → no change
-#   - docker_compose_v2 with pull: missing only pulls images not already local
-#   - health wait uses changed_when: false
-#
-# Handler `Restart application stack` fires only when .env or compose file
-# changes. That's the correct semantic: if only the image tag changes, the
-# compose module handles it; if config changes, we need an explicit restart
-# so running containers pick up the new env vars.
-# ---------------------------------------------------------------------------
-
 - name: Ensure application directory exists
   ansible.builtin.file:
     path: "{{ app_dir }}"
