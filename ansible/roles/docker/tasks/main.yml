@@ -1,2 +1,89 @@
----
-[]
+# docker compose plugin 
+- name: Check if Docker CLI is available
+  ansible.builtin.command:
+    cmd: which docker
+  register: docker_bin
+  changed_when: false
+  failed_when: false
+
+- name: Check if Docker Compose plugin is available
+  ansible.builtin.command:
+    cmd: docker compose version
+  register: docker_compose_bin
+  changed_when: false
+  failed_when: false
+  when: docker_bin.rc == 0
+
+- name: Install Docker Engine and Compose plugin
+  when: >
+    docker_bin.rc != 0
+    or (docker_compose_bin.rc | default(1)) != 0
+  block:
+    - name: Install dnf-plugins-core
+      ansible.builtin.dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Remove conflicting Docker packages
+      ansible.builtin.dnf:
+        name:
+          - docker
+          - docker-client
+          - docker-common
+          - docker-engine
+        state: absent
+      failed_when: false
+
+    - name: Add Docker CE repository
+      ansible.builtin.command:
+        cmd: dnf config-manager --add-repo https://download.docker.com/linux/amzn/2023/docker-ce.repo
+        creates: /etc/yum.repos.d/docker-ce.repo
+
+    - name: Install Docker CE and Compose plugin
+      ansible.builtin.dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+- name: Ensure Docker config directory exists
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+
+- name: Configure Docker daemon log rotation
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "{{ docker_log_max_size }}",
+          "max-file": "{{ docker_log_max_file }}"
+        }
+      }
+    mode: "0644"
+  notify: Restart docker
+
+- name: Enable and start Docker
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Add admin user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Verify Docker Compose is functional
+  ansible.builtin.command:
+    cmd: docker compose version
+  register: docker_compose_verify
+  changed_when: false
+  failed_when: docker_compose_verify.rc != 0
