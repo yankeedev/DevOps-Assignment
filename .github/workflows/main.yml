@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
 
       - name: Check workspace structure
         run: |
@@ -53,10 +53,10 @@ jobs:
             build-command: npm run build
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
 
       - name: Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -97,7 +97,7 @@ jobs:
     needs: checks
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
 
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
@@ -113,8 +113,9 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           exit-code: '1'
-          -name:  Run tfsec
-          uses: aquasecurity/tfsec-action@v1.0.0
-          with:
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
           working_directory: '.'
           soft_fail: false
