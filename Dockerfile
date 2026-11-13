@@ -53,9 +53,6 @@ COPY --from=backend-build /app/backend/prisma ./backend/prisma
 # copy the built frontend bundle 
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
-# install the frontend static serve globally
-RUN npm install -g serve
-
 # switch to a non-root user before runtime
 USER app
 
@@ -66,5 +63,5 @@ EXPOSE 5000 4173
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -fsS http://localhost:5000/health || exit 1
 
-# Start service in the same container
-CMD ["sh", "-c", "node /app/backend/dist/index.js & serve -s /app/frontend/dist -l 4173 & wait"]
+# Start the API and frontend static server
+CMD ["node", "/app/backend/dist/index.js"]
