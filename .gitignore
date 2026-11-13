@@ -34,3 +34,4 @@ crash.*.log
 # Keep example variable files
 !*.tfvars.example
 
+.vault.yml
