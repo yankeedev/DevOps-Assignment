@@ -1,0 +1,41 @@
+# {{ ansible_managed }}
+# SSH hardening for AgriRent — drop-in for /etc/ssh/sshd_config.d/
+# Loaded via 'Include /etc/ssh/sshd_config.d/*.conf' in the main sshd_config.
+#
+# AL2023 drop-ins are loaded in ALPHABETICAL order and OpenSSH uses
+# FIRST-OCCURRENCE-WINS semantics — not last-wins. A 99- prefix would load
+# AFTER vendor files (e.g. 50-redhat.conf, which sets X11Forwarding yes), so
+# the vendor value would win. The 00- prefix loads first and takes precedence.
+
+# Authentication
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+PermitRootLogin no
+
+# Rate limiting
+MaxAuthTries {{ ssh_max_auth_tries }}
+LoginGraceTime {{ ssh_login_grace_time }}
+MaxSessions 10
+MaxStartups 10:30:60
+
+# Session timeouts — idle sessions disconnect after
+# ClientAliveInterval * ClientAliveCountMax = {{ ssh_client_alive_interval * ssh_client_alive_count_max }}s
+ClientAliveInterval {{ ssh_client_alive_interval }}
+ClientAliveCountMax {{ ssh_client_alive_count_max }}
+
+# Disable unnecessary features
+X11Forwarding no
+AllowAgentForwarding no
+PermitUserEnvironment no
+HostbasedAuthentication no
+IgnoreRhosts yes
+
+# Logging
+LogLevel VERBOSE
+
+# Do NOT restrict AllowUsers/AllowGroups here. The default is to allow any
+# system user with a valid key — restricting to a hardcoded list is the most
+# common cause of self-inflicted lockout during Ansible runs. Rely on
+# PermitRootLogin no + PasswordAuthentication no + fail2ban instead.

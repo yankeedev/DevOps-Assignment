@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+# Fail2ban jail configuration for AgriRent
+
+[DEFAULT]
+# Ban an IP for 1 hour after 5 failed attempts in a 10-minute window.
+# Tuned for a public EC2 host exposed to opportunistic SSH brute-force.
+bantime  = 3600
+findtime = 600
+maxretry = 5
+banaction = firewallcmd-ipset
+backend   = systemd
+
+[sshd]
+enabled  = true
+port     = {{ ssh_port }}
+logpath  = %(sshd_log)s
+maxretry = 5
