@@ -19,7 +19,6 @@
 - name: Install baseline packages
   ansible.builtin.dnf:
     name:
-      - curl        # used by the container healthcheck
       - firewalld   # configured by roles/security
       - python3-dnf # ensures ansible.builtin.dnf module works reliably
     state: present
