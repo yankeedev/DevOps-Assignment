@@ -88,3 +88,20 @@ jobs:
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
         run: docker build -t my-app:ci .
+
+
+      - name: Run trivy container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'my-app:ci'
+          format: 'table'
+          severity: 'CRITICAL'
+          exit-code : '1'
+          ignore-unfixed : 'true'
+      
+      - name: Run tfsec IaC scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: '.'
+          soft_fail: false  
