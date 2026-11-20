@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import {
   fetchStats, fetchAllEquipment, fetchAllUsers, fetchAllBookings,
   approveEquipment, rejectEquipment,
@@ -23,6 +25,8 @@ const BOOKING_COLORS: Record<string, string> = {
 }
 
 export default function AdminPage() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('stats')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [equipment, setEquipment] = useState<AdminEquipment[]>([])
@@ -34,6 +38,12 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [detailItem, setDetailItem] = useState<AdminEquipment | null>(null)
+
+  async function handleSignOut() {
+    await logout()
+    navigate('/', { replace: true })
+  }
 
   function showToast(msg: string) {
     setToast(msg)
@@ -91,8 +101,12 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <header className="bg-[#1B5E20] px-6 py-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-white">AgriRent — Admin Panel</h1>
+          <button onClick={handleSignOut}
+            className="text-sm text-white border border-white/40 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors">
+            Sign out
+          </button>
         </div>
       </header>
 
@@ -179,18 +193,24 @@ export default function AdminPage() {
                       RWF {Number(item.dailyPrice).toLocaleString()} / day
                     </p>
                   </div>
-                  {item.approvalStatus === 'PENDING' && (
-                    <div className="flex flex-col gap-2 flex-shrink-0 justify-center">
-                      <button onClick={() => handleDecision(item.id, 'approve')} disabled={processing !== null}
-                        className="bg-[#4CAF50] hover:bg-[#2E7D32] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                        {processing === item.id + 'approve' ? '…' : 'Approve'}
+                  <div className="flex flex-col gap-2 flex-shrink-0 justify-center">
+                      <button onClick={() => setDetailItem(item)}
+                        className="text-xs border border-[#455A64] text-[#455A64] px-3 py-1.5 rounded-lg hover:bg-[#F5F5F5] transition-colors">
+                        View
                       </button>
-                      <button onClick={() => handleDecision(item.id, 'reject')} disabled={processing !== null}
-                        className="bg-[#E53935] hover:bg-[#E53935]/80 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                        {processing === item.id + 'reject' ? '…' : 'Reject'}
-                      </button>
+                      {item.approvalStatus === 'PENDING' && (
+                        <>
+                          <button onClick={() => handleDecision(item.id, 'approve')} disabled={processing !== null}
+                            className="bg-[#4CAF50] hover:bg-[#2E7D32] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+                            {processing === item.id + 'approve' ? '…' : 'Approve'}
+                          </button>
+                          <button onClick={() => handleDecision(item.id, 'reject')} disabled={processing !== null}
+                            className="bg-[#E53935] hover:bg-[#E53935]/80 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+                            {processing === item.id + 'reject' ? '…' : 'Reject'}
+                          </button>
+                        </>
+                      )}
                     </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -269,6 +289,46 @@ export default function AdminPage() {
           </>
         )}
       </main>
+
+      {/* Equipment Detail Modal */}
+      {detailItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setDetailItem(null)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-lg font-bold text-[#212121]">{detailItem.name}</h2>
+              <button onClick={() => setDetailItem(null)} className="text-[#B0BEC5] hover:text-[#455A64] text-xl leading-none">&times;</button>
+            </div>
+            {detailItem.imageUrl && (
+              <img src={detailItem.imageUrl} alt={detailItem.name} className="w-full h-48 object-cover rounded-xl mb-4" />
+            )}
+            <div className="space-y-2 text-sm">
+              <Row label="Category" value={detailItem.category} />
+              <Row label="Location" value={`${detailItem.district}, ${detailItem.sector}`} />
+              <Row label="Daily Price" value={`RWF ${Number(detailItem.dailyPrice).toLocaleString()}`} />
+              <Row label="Status" value={detailItem.status} />
+              <Row label="Approval" value={detailItem.approvalStatus} />
+              <Row label="Owner" value={`${detailItem.owner.name} (${detailItem.owner.email})`} />
+              <Row label="Submitted" value={new Date(detailItem.createdAt).toLocaleDateString()} />
+              <div className="pt-2">
+                <p className="text-xs font-medium text-[#455A64] mb-1">Description</p>
+                <p className="text-[#212121] text-sm leading-relaxed">{detailItem.description}</p>
+              </div>
+            </div>
+            {detailItem.approvalStatus === 'PENDING' && (
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => { handleDecision(detailItem.id, 'approve'); setDetailItem(null) }}
+                  className="flex-1 bg-[#4CAF50] hover:bg-[#2E7D32] text-white font-medium py-2 rounded-lg text-sm transition-colors">
+                  Approve
+                </button>
+                <button onClick={() => { handleDecision(detailItem.id, 'reject'); setDetailItem(null) }}
+                  className="flex-1 bg-[#E53935] hover:bg-[#E53935]/80 text-white font-medium py-2 rounded-lg text-sm transition-colors">
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -286,6 +346,15 @@ function Empty({ title, sub }: { title: string; sub: string }) {
     <div className="text-center py-16">
       <p className="text-lg font-medium text-[#455A64]">{title}</p>
       {sub && <p className="text-sm mt-1 text-[#B0BEC5]">{sub}</p>}
+    </div>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className="text-[#455A64] w-24 flex-shrink-0">{label}</span>
+      <span className="text-[#212121] font-medium">{value}</span>
     </div>
   )
 }

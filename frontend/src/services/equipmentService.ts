@@ -25,3 +25,7 @@ export async function updateEquipment(id: string, payload: Partial<AddEquipmentP
   const { data } = await api.patch<{ data: OwnerEquipment }>(`/api/equipment/${encodeURIComponent(id)}`, payload)
   return data.data
 }
+
+export async function deleteEquipment(id: string): Promise<void> {
+  await api.delete(`/api/equipment/${encodeURIComponent(id)}`)
+}

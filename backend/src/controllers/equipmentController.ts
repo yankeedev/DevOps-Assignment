@@ -142,3 +142,20 @@ export async function updateEquipment(req: AuthRequest, res: Response): Promise<
     res.status(500).json({ error: "Server error" });
   }
 }
+
+export async function deleteEquipment(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.equipment.findUnique({ where: { id } });
+    if (!existing) { res.status(404).json({ error: "Equipment not found" }); return; }
+    if (existing.ownerId !== req.user!.userId) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    await prisma.equipment.delete({ where: { id } });
+    res.json({ message: "Equipment deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+}
