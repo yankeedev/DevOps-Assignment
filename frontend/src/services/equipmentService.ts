@@ -6,6 +6,11 @@ export async function fetchAvailableEquipment(): Promise<PublicEquipment[]> {
   return data.data
 }
 
+export async function getEquipmentById(id: string): Promise<PublicEquipment> {
+  const { data } = await api.get<{ data: PublicEquipment }>(`/api/equipment/${encodeURIComponent(id)}`)
+  return data.data
+}
+
 export async function fetchMyEquipment(): Promise<OwnerEquipment[]> {
   const { data } = await api.get<{ data: OwnerEquipment[] }>('/api/equipment/mine')
   return data.data
@@ -13,5 +18,10 @@ export async function fetchMyEquipment(): Promise<OwnerEquipment[]> {
 
 export async function addEquipment(payload: AddEquipmentPayload): Promise<OwnerEquipment> {
   const { data } = await api.post<{ data: OwnerEquipment }>('/api/equipment', payload)
+  return data.data
+}
+
+export async function updateEquipment(id: string, payload: Partial<AddEquipmentPayload & { status: string }>): Promise<OwnerEquipment> {
+  const { data } = await api.patch<{ data: OwnerEquipment }>(`/api/equipment/${encodeURIComponent(id)}`, payload)
   return data.data
 }

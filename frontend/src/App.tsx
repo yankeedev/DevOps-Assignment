@@ -5,6 +5,7 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import LandingPage from './pages/LandingPage'
 import EquipmentListingPage from './pages/EquipmentListingPage'
+import EquipmentDetailPage from './pages/EquipmentDetailPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
@@ -17,6 +18,8 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/equipment" element={<EquipmentListingPage />} />
+          <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
 
           <Route
             path="/profile"
@@ -30,7 +33,7 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+              <ProtectedRoute>
                 <DashboardPage />
               </ProtectedRoute>
             }
@@ -45,7 +48,6 @@ export default function App() {
             }
           />
 
-          <Route path="/equipment" element={<EquipmentListingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

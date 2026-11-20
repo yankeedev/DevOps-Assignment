@@ -1,4 +1,3 @@
-import axios from "axios";
 import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -16,14 +15,11 @@ export const Login = () => {
     setError(null);
     setBusy(true);
     try {
-      await login({ email, password });
-      navigate("/profile", { replace: true });
+      const loggedIn = await login({ email, password });
+      navigate(loggedIn.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     } catch (err: unknown) {
-      setError(
-        axios.isAxiosError<{ message?: string }>(err)
-          ? err.response?.data?.message || "Login failed"
-          : "Login failed"
-      );
+      const msg = err instanceof Error ? err.message : 'Login failed'
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? msg);
     } finally {
       setBusy(false);
     }

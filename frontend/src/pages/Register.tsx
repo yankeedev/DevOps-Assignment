@@ -1,4 +1,3 @@
-import axios from "axios";
 import { FormEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -20,14 +19,11 @@ export const Register = () => {
     setError(null);
     setBusy(true);
     try {
-      await register(form);
-      navigate("/profile", { replace: true });
+      const newUser = await register(form);
+      navigate(newUser.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
     } catch (err: unknown) {
-      setError(
-        axios.isAxiosError<{ message?: string }>(err)
-          ? err.response?.data?.message || "Registration failed"
-          : "Registration failed"
-      );
+      const msg = err instanceof Error ? err.message : 'Registration failed'
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? msg);
     } finally {
       setBusy(false);
     }
