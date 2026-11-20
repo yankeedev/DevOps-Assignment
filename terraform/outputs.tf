@@ -3,10 +3,6 @@ output "vpc_id" {
   value       = aws_vpc.main.id
 }
 
-output "public_subnet_id" {
-  description = "ID of the public subnet."
-  value       = aws_subnet.public.id
-}
 
 output "app_security_group_id" {
   description = "ID of the application security group."
@@ -20,7 +16,7 @@ output "instance_id" {
 
 output "instance_public_ip" {
   description = "Public IPv4 address of the EC2 instance."
-  value       = aws_instance.app.public_ip
+   value       = "http://${aws_lb.app.dns_name}"
 }
 
 output "instance_private_ip" {
@@ -31,4 +27,13 @@ output "instance_private_ip" {
 output "application_url" {
     description = "HTTP URL for the application frontend."
     value       = "http://${aws_instance.app.public_ip}:4173"
+}
+output "bastion_instance_id" {
+  description = "Bastion EC2 instance ID"
+  value       = aws_instance.bastion.id
+}
+
+output "bastion_public_ip" {
+  description = "Public IP of the bastion server"
+  value       = aws_instance.bastion.public_ip
 }
