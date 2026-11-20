@@ -31,6 +31,9 @@ export default function SiteHeader() {
           <NavLink to="/equipment" className={navLinkClass}>
             Browse tools
           </NavLink>
+          <NavLink to="/shops" className={navLinkClass}>
+            Shops
+          </NavLink>
 
           {loading ? (
             <span className="text-gray-400">…</span>

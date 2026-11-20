@@ -11,6 +11,8 @@ import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 import MyToolsPage from './pages/MyToolsPage'
 
+import ShopsPage from './pages/ShopsPage'
+
 export default function App() {
   return (
     <AuthProvider>
@@ -21,6 +23,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/equipment" element={<EquipmentListingPage />} />
           <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
+          <Route path="/shops" element={<ShopsPage />} />
 
           <Route
             path="/profile"

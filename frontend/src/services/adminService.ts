@@ -1,5 +1,8 @@
 import { api } from '../api/axios'
 import type { ApprovalStatus, EquipmentStatus } from '../types/equipment'
+import type { SupplyShop, SupplyProduct, ProductCategory } from './shopService'
+
+export type { SupplyShop, SupplyProduct }
 
 export interface AdminStats {
   totalUsers: number
@@ -84,4 +87,37 @@ export async function fetchAllUsers(): Promise<AdminUser[]> {
 export async function fetchAllBookings(): Promise<AdminBooking[]> {
   const { data } = await api.get<{ data: AdminBooking[] }>('/api/admin/bookings')
   return data.data
+}
+
+export async function adminFetchShops(): Promise<SupplyShop[]> {
+  const { data } = await api.get<{ data: SupplyShop[] }>('/api/admin/shops')
+  return data.data
+}
+
+export async function adminCreateShop(payload: { name: string; description: string; phone: string; address: string; district: string; sector: string; ownerId: string }): Promise<SupplyShop> {
+  const { data } = await api.post<{ data: SupplyShop }>('/api/admin/shops', payload)
+  return data.data
+}
+
+export async function adminUpdateShop(id: string, payload: Partial<{ name: string; description: string; phone: string; address: string; district: string; sector: string }>): Promise<SupplyShop> {
+  const { data } = await api.patch<{ data: SupplyShop }>(`/api/admin/shops/${id}`, payload)
+  return data.data
+}
+
+export async function adminDeleteShop(id: string): Promise<void> {
+  await api.delete(`/api/admin/shops/${id}`)
+}
+
+export async function adminAddProduct(shopId: string, payload: { name: string; description: string; category: ProductCategory; price: string; unit: string; quantity: string }): Promise<SupplyProduct> {
+  const { data } = await api.post<{ data: SupplyProduct }>(`/api/admin/shops/${shopId}/products`, payload)
+  return data.data
+}
+
+export async function adminUpdateProduct(shopId: string, productId: string, payload: Partial<{ name: string; description: string; category: ProductCategory; price: string; unit: string; quantity: string }>): Promise<SupplyProduct> {
+  const { data } = await api.patch<{ data: SupplyProduct }>(`/api/admin/shops/${shopId}/products/${productId}`, payload)
+  return data.data
+}
+
+export async function adminDeleteProduct(shopId: string, productId: string): Promise<void> {
+  await api.delete(`/api/admin/shops/${shopId}/products/${productId}`)
 }

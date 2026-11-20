@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes";
 import equipmentRoutes from "./routes/equipmentRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import bookingRoutes from "./routes/bookingRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
+import shopRoutes from "./routes/shopRoutes";
 
 const app = express();
 const frontendApp = express();
@@ -53,6 +55,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/equipment/:id/reviews", reviewRoutes);
+app.use("/api/shops", shopRoutes);
 
 frontendApp.use(express.static(frontendDist));
 frontendApp.get("*", (_req, res) => {

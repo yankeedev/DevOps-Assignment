@@ -6,11 +6,15 @@ import {
   approveBooking, rejectBooking, cancelBooking,
   type Booking,
 } from '../services/bookingService'
+import {
+  fetchMyShop, createShop, updateShop, addProduct, updateProduct, deleteProduct,
+  type SupplyShop, type SupplyProduct,
+} from '../services/shopService'
 import type { OwnerEquipment } from '../types/equipment'
 import AddEquipmentForm from '../components/AddEquipmentForm'
 import SiteHeader from '../components/SiteHeader'
 
-type Tab = 'tools' | 'my-rentals' | 'incoming'
+type Tab = 'tools' | 'my-rentals' | 'incoming' | 'shop'
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING:   'bg-yellow-100 text-yellow-800',
@@ -46,6 +50,15 @@ export default function MyToolsPage() {
   const [incoming, setIncoming] = useState<Booking[]>([])
   const [actionBusy, setActionBusy] = useState<string | null>(null)
 
+  // shop state
+  const [shop, setShop] = useState<SupplyShop | null | undefined>(undefined)
+  const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', address: '', district: '', sector: '' })
+  const [editingShop, setEditingShop] = useState(false)
+  const [showProductForm, setShowProductForm] = useState(false)
+  const [productForm, setProductForm] = useState({ name: '', description: '', category: 'SEEDS', price: '', unit: '', quantity: '' })
+  const [editingProduct, setEditingProduct] = useState<SupplyProduct | null>(null)
+  const [shopBusy, setShopBusy] = useState(false)
+
   // shared
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,6 +71,7 @@ export default function MyToolsPage() {
       if (tab === 'tools') await fetchMyEquipment().then(setEquipment)
       else if (tab === 'my-rentals') await fetchMyBookings().then(setMyBookings)
       else if (tab === 'incoming') await fetchIncomingBookings().then(setIncoming)
+      else if (tab === 'shop') await fetchMyShop().then(s => { setShop(s); if (s) setShopForm({ name: s.name, description: s.description, phone: s.phone, address: s.address, district: s.district, sector: s.sector }) })
     }
     load().catch(() => setError('Failed to load data')).finally(() => setLoading(false))
   }, [tab])
@@ -143,10 +157,77 @@ export default function MyToolsPage() {
     } finally { setActionBusy(null) }
   }
 
+  // ── Shop handlers ────────────────────────────────────────────────────────
+  async function handleCreateShop(e: React.FormEvent) {
+    e.preventDefault()
+    setShopBusy(true)
+    try {
+      const created = await createShop(shopForm)
+      setShop(created)
+      flash('Shop created!')
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to create shop') }
+    finally { setShopBusy(false) }
+  }
+
+  async function handleUpdateShop(e: React.FormEvent) {
+    e.preventDefault()
+    if (!shop) return
+    setShopBusy(true)
+    try {
+      const updated = await updateShop(shop.id, shopForm)
+      setShop(updated)
+      setEditingShop(false)
+      flash('Shop updated!')
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to update shop') }
+    finally { setShopBusy(false) }
+  }
+
+  async function handleAddProduct(e: React.FormEvent) {
+    e.preventDefault()
+    if (!shop) return
+    setShopBusy(true)
+    try {
+      const p = await addProduct(shop.id, { ...productForm, category: productForm.category as import('../services/shopService').ProductCategory, price: productForm.price, quantity: Number(productForm.quantity) })
+      setShop(prev => prev ? { ...prev, products: [p, ...prev.products] } : prev)
+      setShowProductForm(false)
+      setProductForm({ name: '', description: '', category: 'SEEDS', price: '', unit: '', quantity: '' })
+      flash('Product added!')
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to add product') }
+    finally { setShopBusy(false) }
+  }
+
+  async function handleUpdateProduct(e: React.FormEvent) {
+    e.preventDefault()
+    if (!shop || !editingProduct) return
+    setShopBusy(true)
+    try {
+      const updated = await updateProduct(shop.id, editingProduct.id, { ...productForm, category: productForm.category as import('../services/shopService').ProductCategory, price: productForm.price, quantity: Number(productForm.quantity) })
+      setShop(prev => prev ? { ...prev, products: prev.products.map(p => p.id === updated.id ? updated : p) } : prev)
+      setEditingProduct(null)
+      flash('Product updated!')
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to update product') }
+    finally { setShopBusy(false) }
+  }
+
+  async function handleDeleteProduct(productId: string) {
+    if (!shop || !window.confirm('Delete this product?')) return
+    try {
+      await deleteProduct(shop.id, productId)
+      setShop(prev => prev ? { ...prev, products: prev.products.filter(p => p.id !== productId) } : prev)
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to delete product') }
+  }
+
+  function startEditProduct(p: SupplyProduct) {
+    setEditingProduct(p)
+    setProductForm({ name: p.name, description: p.description, category: p.category, price: String(p.price), unit: p.unit, quantity: String(p.quantity) })
+    setShowProductForm(false)
+  }
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'tools', label: 'My Tools' },
     { key: 'my-rentals', label: 'My Rentals' },
     { key: 'incoming', label: 'Incoming Requests' },
+    { key: 'shop', label: 'My Shop' },
   ]
 
   return (
@@ -391,6 +472,24 @@ export default function MyToolsPage() {
             </div>
           </>
         )}
+        {/* ── MY SHOP TAB ─────────────────────────────────────────────────── */}
+        {!loading && tab === 'shop' && (
+          <ShopTab
+            shop={shop}
+            shopForm={shopForm} setShopForm={setShopForm}
+            editingShop={editingShop} setEditingShop={setEditingShop}
+            showProductForm={showProductForm} setShowProductForm={setShowProductForm}
+            productForm={productForm} setProductForm={setProductForm}
+            editingProduct={editingProduct} setEditingProduct={setEditingProduct}
+            shopBusy={shopBusy}
+            onCreateShop={handleCreateShop}
+            onUpdateShop={handleUpdateShop}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
+            onStartEditProduct={startEditProduct}
+          />
+        )}
       </main>
     </div>
   )
@@ -432,5 +531,187 @@ function Empty({ title, sub }: { title: string; sub: string }) {
       <p className="text-lg font-medium text-[#455A64]">{title}</p>
       <p className="text-sm mt-1 text-[#B0BEC5]">{sub}</p>
     </div>
+  )
+}
+
+const PRODUCT_CATEGORIES = ['SEEDS', 'FERTILIZERS', 'PESTICIDES', 'TOOLS', 'OTHER']
+const CATEGORY_LABELS: Record<string, string> = {
+  SEEDS: 'Seeds', FERTILIZERS: 'Fertilizers', PESTICIDES: 'Pesticides', TOOLS: 'Tools', OTHER: 'Other',
+}
+const SHOP_DISTRICTS = [
+  'Bugesera','Burera','Gakenke','Gasabo','Gatsibo','Gicumbi','Gisagara','Huye','Kamonyi',
+  'Karongi','Kayonza','Kicukiro','Kirehe','Muhanga','Musanze','Ngoma','Ngororero','Nyabihu',
+  'Nyagatare','Nyamagabe','Nyamasheke','Nyanza','Nyarugenge','Nyaruguru','Rubavu','Ruhango',
+  'Rulindo','Rusizi','Rutsiro','Rwamagana',
+]
+
+type ShopForm = { name: string; description: string; phone: string; address: string; district: string; sector: string }
+type ProductForm = { name: string; description: string; category: string; price: string; unit: string; quantity: string }
+
+function ShopTab({
+  shop, shopForm, setShopForm, editingShop, setEditingShop,
+  showProductForm, setShowProductForm, productForm, setProductForm,
+  editingProduct, setEditingProduct, shopBusy,
+  onCreateShop, onUpdateShop, onAddProduct, onUpdateProduct, onDeleteProduct, onStartEditProduct,
+}: {
+  shop: SupplyShop | null | undefined
+  shopForm: ShopForm; setShopForm: React.Dispatch<React.SetStateAction<ShopForm>>
+  editingShop: boolean; setEditingShop: (v: boolean) => void
+  showProductForm: boolean; setShowProductForm: (v: boolean) => void
+  productForm: ProductForm; setProductForm: React.Dispatch<React.SetStateAction<ProductForm>>
+  editingProduct: SupplyProduct | null; setEditingProduct: (v: SupplyProduct | null) => void
+  shopBusy: boolean
+  onCreateShop: (e: React.FormEvent) => void
+  onUpdateShop: (e: React.FormEvent) => void
+  onAddProduct: (e: React.FormEvent) => void
+  onUpdateProduct: (e: React.FormEvent) => void
+  onDeleteProduct: (id: string) => void
+  onStartEditProduct: (p: SupplyProduct) => void
+}) {
+  // No shop yet
+  if (shop === undefined) return <Spinner />
+
+  if (shop === null) {
+    return (
+      <div className="bg-white rounded-xl border border-[#B0BEC5] p-6">
+        <h3 className="text-lg font-semibold text-[#212121] mb-4">Create your supply shop</h3>
+        <form onSubmit={onCreateShop} className="space-y-4">
+          <ShopFields form={shopForm} setForm={setShopForm} />
+          <button type="submit" disabled={shopBusy}
+            className="bg-[#4CAF50] hover:bg-[#2E7D32] disabled:opacity-50 text-white font-medium px-5 py-2 rounded-lg text-sm transition-colors">
+            {shopBusy ? 'Creating…' : 'Create shop'}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Shop info */}
+      <div className="bg-white rounded-xl border border-[#B0BEC5] p-5">
+        {editingShop ? (
+          <form onSubmit={onUpdateShop} className="space-y-4">
+            <h3 className="text-base font-semibold text-[#212121]">Edit shop details</h3>
+            <ShopFields form={shopForm} setForm={setShopForm} />
+            <div className="flex gap-3">
+              <button type="submit" disabled={shopBusy}
+                className="bg-[#4CAF50] hover:bg-[#2E7D32] disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">
+                {shopBusy ? 'Saving…' : 'Save'}
+              </button>
+              <button type="button" onClick={() => setEditingShop(false)}
+                className="px-4 py-2 rounded-lg border border-[#B0BEC5] text-[#455A64] text-sm hover:bg-[#F5F5F5] transition-colors">
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-[#212121] text-lg">{shop.name}</h3>
+              <p className="text-sm text-[#455A64] mt-0.5">{shop.description}</p>
+              <div className="flex flex-wrap gap-4 mt-2 text-xs text-[#455A64]">
+                <span>📞 {shop.phone}</span>
+                <span>📍 {shop.address}</span>
+                <span>🗺 {shop.district}, {shop.sector}</span>
+              </div>
+            </div>
+            <button onClick={() => setEditingShop(true)}
+              className="text-xs border border-[#2E7D32] text-[#2E7D32] px-3 py-1.5 rounded-lg hover:bg-[#2E7D32]/10 transition-colors flex-shrink-0">
+              Edit
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Products */}
+      <div className="bg-white rounded-xl border border-[#B0BEC5] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-[#212121]">Products ({shop.products.length})</h3>
+          {!showProductForm && !editingProduct && (
+            <button onClick={() => setShowProductForm(true)}
+              className="bg-[#4CAF50] hover:bg-[#2E7D32] text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
+              + Add product
+            </button>
+          )}
+        </div>
+
+        {(showProductForm || editingProduct) && (
+          <form onSubmit={editingProduct ? onUpdateProduct : onAddProduct} className="mb-5 pb-5 border-b border-[#F5F5F5] space-y-3">
+            <h4 className="text-sm font-medium text-[#212121]">{editingProduct ? 'Edit product' : 'New product'}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <EField label="Name"><input className={inp()} value={productForm.name} onChange={e => setProductForm(p => ({ ...p, name: e.target.value }))} required /></EField>
+              <EField label="Category">
+                <select className={inp()} value={productForm.category} onChange={e => setProductForm(p => ({ ...p, category: e.target.value }))}>
+                  {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
+                </select>
+              </EField>
+            </div>
+            <EField label="Description"><textarea className={inp()} rows={2} value={productForm.description} onChange={e => setProductForm(p => ({ ...p, description: e.target.value }))} required /></EField>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <EField label="Price (RWF)"><input type="number" min="1" className={inp()} value={productForm.price} onChange={e => setProductForm(p => ({ ...p, price: e.target.value }))} required /></EField>
+              <EField label="Unit"><input className={inp()} placeholder="kg, bag, litre…" value={productForm.unit} onChange={e => setProductForm(p => ({ ...p, unit: e.target.value }))} required /></EField>
+              <EField label="Quantity"><input type="number" min="0" className={inp()} value={productForm.quantity} onChange={e => setProductForm(p => ({ ...p, quantity: e.target.value }))} required /></EField>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" disabled={shopBusy}
+                className="bg-[#4CAF50] hover:bg-[#2E7D32] disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">
+                {shopBusy ? 'Saving…' : editingProduct ? 'Save changes' : 'Add product'}
+              </button>
+              <button type="button" onClick={() => { setShowProductForm(false); setEditingProduct(null) }}
+                className="px-4 py-2 rounded-lg border border-[#B0BEC5] text-[#455A64] text-sm hover:bg-[#F5F5F5] transition-colors">
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
+        {shop.products.length === 0 && !showProductForm && (
+          <p className="text-sm text-[#B0BEC5]">No products yet. Add your first product.</p>
+        )}
+        <div className="space-y-2">
+          {shop.products.map(p => (
+            <div key={p.id} className="flex items-start justify-between gap-3 rounded-lg border border-[#B0BEC5] p-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-sm text-[#212121]">{p.name}</span>
+                  <span className="text-xs bg-[#F5F5F5] text-[#455A64] px-2 py-0.5 rounded-full">{CATEGORY_LABELS[p.category] ?? p.category}</span>
+                </div>
+                <p className="text-xs text-[#455A64] mt-0.5 line-clamp-1">{p.description}</p>
+                <p className="text-xs font-medium text-[#2E7D32] mt-0.5">RWF {Number(p.price).toLocaleString()} / {p.unit} · Qty: {p.quantity}</p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button onClick={() => onStartEditProduct(p)}
+                  className="text-xs border border-[#2E7D32] text-[#2E7D32] px-2 py-1 rounded-lg hover:bg-[#2E7D32]/10 transition-colors">Edit</button>
+                <button onClick={() => onDeleteProduct(p.id)}
+                  className="text-xs border border-[#E53935] text-[#E53935] px-2 py-1 rounded-lg hover:bg-[#E53935]/10 transition-colors">Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShopFields({ form, setForm }: { form: ShopForm; setForm: React.Dispatch<React.SetStateAction<ShopForm>> }) {
+  return (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <EField label="Shop Name"><input className={inp()} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></EField>
+        <EField label="Phone"><input className={inp()} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} required /></EField>
+      </div>
+      <EField label="Description"><textarea className={inp()} rows={2} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} required /></EField>
+      <EField label="Address"><input className={inp()} value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} required /></EField>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <EField label="District">
+          <select className={inp()} value={form.district} onChange={e => setForm(p => ({ ...p, district: e.target.value }))} required>
+            <option value="">Select district</option>
+            {SHOP_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </EField>
+        <EField label="Sector"><input className={inp()} value={form.sector} onChange={e => setForm(p => ({ ...p, sector: e.target.value }))} required /></EField>
+      </div>
+    </>
   )
 }
