@@ -1,4 +1,4 @@
-resource "aws_iam_role" "app"{
+resource "aws_iam_role" "app" {
   name = "${var.project_name}-${var.environment}-app-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -6,10 +6,10 @@ resource "aws_iam_role" "app"{
       Effect = "Allow"
       Principal = {
         Service = "ec2.amazonaws.com"
-        }
+      }
 
-        Action = "sts:AssumeRole"
-      }]
+      Action = "sts:AssumeRole"
+    }]
   })
   tags = {
     Project     = var.project_name
@@ -18,7 +18,7 @@ resource "aws_iam_role" "app"{
 }
 
 resource "aws_iam_role_policy_attachment" "ecr_readonly" {
-  
+
   role       = aws_iam_role.app.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 
@@ -46,7 +46,7 @@ resource "aws_iam_instance_profile" "app" {
 }
 
 resource "aws_ecr_repository" "app" {
-  name = var.ecr_repository_name
+  name                 = var.ecr_repository_name
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
     scan_on_push = true
@@ -55,24 +55,24 @@ resource "aws_ecr_repository" "app" {
     encryption_type = "AES256"
   }
   tags = {
-    Name = "${var.project_name}-${var.environment}-ecr"
+    Name        = "${var.project_name}-${var.environment}-ecr"
     Project     = var.project_name
     Environment = var.environment
   }
 }
 
 resource "aws_instance" "bastion" {
-  ami           = var.ami_id
-  instance_type = var.bastion_instance_type
-  key_name      = var.key_pair_name
-  subnet_id     = aws_subnet.public_a.id
-  vpc_security_group_ids = [aws_security_group.bastion.id]
+  ami                         = var.ami_id
+  instance_type               = var.bastion_instance_type
+  key_name                    = var.key_pair_name
+  subnet_id                   = aws_subnet.public_a.id
+  vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = true
 
   root_block_device {
-    volume_size = 10
-    volume_type = "gp3"
-    encrypted = true
+    volume_size           = 10
+    volume_type           = "gp3"
+    encrypted             = true
     delete_on_termination = true
   }
 
@@ -258,7 +258,7 @@ resource "aws_db_instance" "database" {
   backup_retention_period = 1
 
   auto_minor_version_upgrade = true
-  skip_final_snapshot       = true
+  skip_final_snapshot        = true
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-database"
