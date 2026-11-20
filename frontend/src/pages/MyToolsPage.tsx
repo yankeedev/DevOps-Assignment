@@ -121,11 +121,22 @@ export default function MyToolsPage() {
   async function handleIncoming(id: string, action: 'approve' | 'reject') {
     setActionBusy(id + action)
     try {
-      if (action === 'approve') await approveBooking(id)
-      else await rejectBooking(id)
-      setIncoming(prev => prev.map(b =>
-        b.id === id ? { ...b, status: action === 'approve' ? 'APPROVED' : 'REJECTED' } : b
-      ))
+      if (action === 'approve') {
+        await approveBooking(id)
+        // approving one auto-rejects all other pending bookings for the same equipment
+        setIncoming(prev => {
+          const approved = prev.find(b => b.id === id)
+          return prev.map(b => {
+            if (b.id === id) return { ...b, status: 'APPROVED' as const }
+            if (approved && b.equipmentId === approved.equipmentId && b.status === 'PENDING')
+              return { ...b, status: 'REJECTED' as const }
+            return b
+          })
+        })
+      } else {
+        await rejectBooking(id)
+        setIncoming(prev => prev.map(b => b.id === id ? { ...b, status: 'REJECTED' as const } : b))
+      }
       flash(`Booking ${action === 'approve' ? 'approved' : 'rejected'}.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed')
@@ -306,6 +317,7 @@ export default function MyToolsPage() {
                       </div>
                       <p className="text-xs text-[#455A64]">{b.equipment?.category} · {b.equipment?.district}, {b.equipment?.sector}</p>
                       <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        {b.equipment?.dailyPrice && <Detail label="Daily price" value={`RWF ${Number(b.equipment.dailyPrice).toLocaleString()} / day`} />}
                         <Detail label="Start" value={new Date(b.startDate).toLocaleDateString()} />
                         <Detail label="End" value={new Date(b.endDate).toLocaleDateString()} />
                         <Detail label="Total cost" value={`RWF ${Number(b.totalCost).toLocaleString()}`} />
@@ -314,7 +326,7 @@ export default function MyToolsPage() {
                       </div>
                     </div>
                   </div>
-                  {b.status === 'PENDING' && (
+                  {(b.status === 'PENDING' || b.status === 'APPROVED') && (
                     <div className="mt-4 pt-4 border-t border-[#F5F5F5] flex justify-end">
                       <button onClick={() => handleCancel(b.id)} disabled={actionBusy === b.id}
                         className="text-xs text-[#E53935] border border-[#E53935] px-4 py-1.5 rounded-lg hover:bg-[#E53935]/10 disabled:opacity-50 transition-colors">

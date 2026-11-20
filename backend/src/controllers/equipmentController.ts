@@ -49,11 +49,17 @@ export async function createEquipment(req: AuthRequest, res: Response): Promise<
 export async function listAvailableEquipment(_req: AuthRequest, res: Response): Promise<void> {
   try {
     const equipment = await prisma.equipment.findMany({
-      where: { approvalStatus: "APPROVED", status: "AVAILABLE" },
+      where: { approvalStatus: "APPROVED", status: { in: ["AVAILABLE", "UNAVAILABLE"] } },
       select: {
         id: true, name: true, description: true, category: true,
-        dailyPrice: true, imageUrl: true, district: true, sector: true, createdAt: true,
+        dailyPrice: true, imageUrl: true, district: true, sector: true, status: true, createdAt: true,
         owner: { select: { id: true, name: true } },
+        bookings: {
+          where: { status: { in: ["APPROVED", "ACTIVE"] } },
+          select: { startDate: true, endDate: true },
+          orderBy: { startDate: "asc" },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -74,6 +80,12 @@ export async function getEquipmentById(req: AuthRequest, res: Response): Promise
         dailyPrice: true, imageUrl: true, district: true, sector: true,
         status: true, approvalStatus: true, createdAt: true,
         owner: { select: { id: true, name: true } },
+        bookings: {
+          where: { status: { in: ["APPROVED", "ACTIVE"] } },
+          select: { startDate: true, endDate: true },
+          orderBy: { startDate: "asc" },
+          take: 1,
+        },
       },
     });
     if (!equipment) { res.status(404).json({ error: "Equipment not found" }); return; }

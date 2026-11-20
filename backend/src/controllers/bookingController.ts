@@ -92,7 +92,8 @@ export async function listMyBookings(req: AuthRequest, res: Response): Promise<v
     const bookings = await prisma.booking.findMany({
       where: { farmerId: req.user!.userId },
       include: {
-        equipment: { select: { id: true, name: true, category: true, district: true, sector: true, imageUrl: true } },
+        equipment: { select: { id: true, name: true, category: true, district: true, sector: true, imageUrl: true, dailyPrice: true } },
+        owner: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -132,11 +133,45 @@ export async function approveBooking(req: AuthRequest, res: Response): Promise<v
       res.status(409).json({ error: `Cannot approve: status is ${booking.status}` });
       return;
     }
-    const updated = await prisma.booking.update({
-      where: { id }, data: { status: "APPROVED" },
+
+    // Re-check overlap inside transaction to prevent race conditions
+    const [updated] = await prisma.$transaction(async (tx) => {
+      const overlap = await tx.booking.findFirst({
+        where: {
+          equipmentId: booking.equipmentId,
+          id: { not: id },
+          status: { in: ["APPROVED", "ACTIVE"] },
+          startDate: { lte: booking.endDate },
+          endDate: { gte: booking.startDate },
+        },
+      });
+      if (overlap) throw new Error("CONFLICT");
+
+      const updatedBooking = await tx.booking.update({
+        where: { id }, data: { status: "APPROVED" },
+      });
+      // Mark equipment UNAVAILABLE so no new bookings can be placed
+      await tx.equipment.update({
+        where: { id: booking.equipmentId }, data: { status: "UNAVAILABLE" },
+      });
+      // Reject all other PENDING bookings for the same equipment
+      await tx.booking.updateMany({
+        where: {
+          equipmentId: booking.equipmentId,
+          id: { not: id },
+          status: "PENDING",
+        },
+        data: { status: "REJECTED" },
+      });
+      return [updatedBooking];
     });
+
     res.json({ data: updated });
   } catch (err) {
+    if (err instanceof Error && err.message === "CONFLICT") {
+      res.status(409).json({ error: "Equipment is already booked for those dates" });
+      return;
+    }
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
@@ -163,21 +198,29 @@ export async function rejectBooking(req: AuthRequest, res: Response): Promise<vo
   }
 }
 
-// PATCH /api/bookings/:id/cancel — farmer cancels their own pending booking
+// PATCH /api/bookings/:id/cancel — farmer cancels their own pending/approved booking
 export async function cancelBooking(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const booking = await prisma.booking.findUnique({ where: { id } });
     if (!booking) { res.status(404).json({ error: "Booking not found" }); return; }
     if (booking.farmerId !== req.user!.userId) { res.status(403).json({ error: "Forbidden" }); return; }
-    if (booking.status !== "PENDING") {
+    if (!(["PENDING", "APPROVED"] as string[]).includes(booking.status)) {
       res.status(409).json({ error: `Cannot cancel: status is ${booking.status}` });
       return;
     }
-    const updated = await prisma.booking.update({
-      where: { id }, data: { status: "CANCELLED" },
+
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({ where: { id }, data: { status: "CANCELLED" } });
+      // If this was an approved booking, free the equipment back to AVAILABLE
+      if (booking.status === "APPROVED") {
+        await tx.equipment.update({
+          where: { id: booking.equipmentId }, data: { status: "AVAILABLE" },
+        });
+      }
     });
-    res.json({ data: updated });
+
+    res.json({ message: "Booking cancelled" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

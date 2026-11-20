@@ -128,7 +128,23 @@ export default function EquipmentDetailPage() {
                   </p>
                 )}
 
-                {!isOwner && (
+                {!isOwner && equipment.status === 'UNAVAILABLE' && (() => {
+                  const booking = equipment.bookings?.[0]
+                  return (
+                    <div className="rounded-lg bg-orange-50 border border-orange-200 p-4 text-sm text-center">
+                      <p className="text-2xl mb-2">🔒</p>
+                      <p className="font-semibold text-orange-800">Currently booked</p>
+                      {booking && (
+                        <p className="text-orange-700 mt-1">
+                          {new Date(booking.startDate).toLocaleDateString()} – {new Date(booking.endDate).toLocaleDateString()}
+                        </p>
+                      )}
+                      <p className="text-orange-600 mt-2 text-xs">Check back after the rental period ends.</p>
+                    </div>
+                  )
+                })()}
+
+                {!isOwner && equipment.status === 'AVAILABLE' && (
                   <>
                     {bookingSuccess && (
                       <div className="mb-4 rounded-lg border border-[#43A047] bg-[#43A047]/10 px-3 py-2 text-sm text-[#1B5E20]">
