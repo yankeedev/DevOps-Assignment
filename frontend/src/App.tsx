@@ -9,6 +9,7 @@ import EquipmentDetailPage from './pages/EquipmentDetailPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
+import MyToolsPage from './pages/MyToolsPage'
 
 export default function App() {
   return (
@@ -26,6 +27,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/my-tools"
+            element={
+              <ProtectedRoute>
+                <MyToolsPage />
               </ProtectedRoute>
             }
           />

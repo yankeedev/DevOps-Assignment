@@ -39,11 +39,9 @@ export default function SiteHeader() {
               <NavLink to="/profile" className={navLinkClass}>
                 Profile
               </NavLink>
-              {canManageTools && (
-                <NavLink to="/dashboard" className={navLinkClass}>
-                  Dashboard
-                </NavLink>
-              )}
+              <NavLink to="/my-tools" className={navLinkClass}>
+                Dashboard
+              </NavLink>
               {user.role === 'admin' && (
                 <NavLink to="/admin" className={navLinkClass}>
                   Admin

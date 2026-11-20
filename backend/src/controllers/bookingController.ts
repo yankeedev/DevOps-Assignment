@@ -109,7 +109,7 @@ export async function listIncomingBookings(req: AuthRequest, res: Response): Pro
     const bookings = await prisma.booking.findMany({
       where: { ownerId: req.user!.userId },
       include: {
-        equipment: { select: { id: true, name: true, category: true } },
+        equipment: { select: { id: true, name: true, category: true, district: true, sector: true, imageUrl: true, dailyPrice: true } },
         farmer: { select: { id: true, name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
