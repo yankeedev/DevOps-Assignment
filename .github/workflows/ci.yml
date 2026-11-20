@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,6 +18,20 @@ permissions:
   contents: read
 
 jobs:
+
+  structure:
+    name: validate code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: checks worksplace structure 
+        run: |
+          echo "running background srtucture checks..."
+          ls -la
+
   checks:
     name: ${{ matrix.app-name }} checks
     runs-on: ubuntu-latest
@@ -55,6 +70,12 @@ jobs:
       - name: Dependencies
         run: npm ci
         working-directory: ${{ matrix.working-directory }}
+      - name: dependencies audit
+        run: npm audit
+        working-directory: ${{ matrix.working-directory }}
+
+
+
 
       - name: Lint tools
         if: matrix.lint-tools != ''
@@ -75,7 +96,8 @@ jobs:
         if: matrix.build-command != ''
         run: ${{ matrix.build-command }}
         working-directory: ${{ matrix.working-directory }}
-
+    
+        
   docker:
     name: Build Docker image
     runs-on: ubuntu-latest
