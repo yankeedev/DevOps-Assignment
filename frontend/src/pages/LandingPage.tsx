@@ -1,6 +1,10 @@
-﻿import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
   return (
     <div className="min-h-screen bg-white text-[var(--color-charcoal)]">
       {/* Navbar */}
