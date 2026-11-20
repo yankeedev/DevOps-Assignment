@@ -17,13 +17,6 @@ export default function LandingPage() {
             <span className="text-lg font-bold">AgriRent</span>
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-            <a href="#features" className="hover:text-[var(--color-primary)]">Features</a>
-            <a href="#how-it-works" className="hover:text-[var(--color-primary)]">How it works</a>
-            <a href="#marketplace" className="hover:text-[var(--color-primary)]">Marketplace</a>
-            <a href="#contact" className="hover:text-[var(--color-primary)]">Contact</a>
-          </nav>
-
           <div className="flex items-center gap-3">
             <Link to="/login" className="hidden px-3 py-2 text-sm font-medium hover:text-[var(--color-primary)] sm:inline-block">
               Login
