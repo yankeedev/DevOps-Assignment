@@ -116,16 +116,16 @@ describe("ProtectedRoute", () => {
       <AuthProvider>
         <MemoryRouter initialEntries={[initialPath]}>
           <Routes>
-            <Route path="/login" element={<div>LOGIN</div>} />
+            <Route path="/" element={<div>HOME</div>} />
             <Route path={initialPath} element={element} />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
     );
 
-  it("redirects to /login when no user", async () => {
+  it("redirects to / when no user", async () => {
     renderAt("/dashboard", <ProtectedRoute><div>SECRET</div></ProtectedRoute>);
-    await waitFor(() => expect(screen.getByText("LOGIN")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("HOME")).toBeTruthy());
   });
 
   it("renders children for a logged-in user", async () => {

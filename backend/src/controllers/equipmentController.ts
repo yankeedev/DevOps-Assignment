@@ -49,11 +49,17 @@ export async function createEquipment(req: AuthRequest, res: Response): Promise<
 export async function listAvailableEquipment(_req: AuthRequest, res: Response): Promise<void> {
   try {
     const equipment = await prisma.equipment.findMany({
-      where: { approvalStatus: "APPROVED", status: "AVAILABLE" },
+      where: { approvalStatus: "APPROVED", status: { in: ["AVAILABLE", "UNAVAILABLE"] } },
       select: {
         id: true, name: true, description: true, category: true,
-        dailyPrice: true, imageUrl: true, district: true, sector: true, createdAt: true,
+        dailyPrice: true, imageUrl: true, district: true, sector: true, status: true, createdAt: true,
         owner: { select: { id: true, name: true } },
+        bookings: {
+          where: { status: { in: ["APPROVED", "ACTIVE"] } },
+          select: { startDate: true, endDate: true },
+          orderBy: { startDate: "asc" },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -74,6 +80,12 @@ export async function getEquipmentById(req: AuthRequest, res: Response): Promise
         dailyPrice: true, imageUrl: true, district: true, sector: true,
         status: true, approvalStatus: true, createdAt: true,
         owner: { select: { id: true, name: true } },
+        bookings: {
+          where: { status: { in: ["APPROVED", "ACTIVE"] } },
+          select: { startDate: true, endDate: true },
+          orderBy: { startDate: "asc" },
+          take: 1,
+        },
       },
     });
     if (!equipment) { res.status(404).json({ error: "Equipment not found" }); return; }
@@ -137,6 +149,23 @@ export async function updateEquipment(req: AuthRequest, res: Response): Promise<
       },
     });
     res.json({ data: updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+}
+
+export async function deleteEquipment(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.equipment.findUnique({ where: { id } });
+    if (!existing) { res.status(404).json({ error: "Equipment not found" }); return; }
+    if (existing.ownerId !== req.user!.userId) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    await prisma.equipment.delete({ where: { id } });
+    res.json({ message: "Equipment deleted" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
