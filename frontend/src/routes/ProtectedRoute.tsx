@@ -11,7 +11,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: Props) => {
   const { user, loading } = useAuth();
 
   if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/profile" replace />;
   }
