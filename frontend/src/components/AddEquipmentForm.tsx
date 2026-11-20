@@ -17,7 +17,7 @@ const DISTRICTS = [
   'Rulindo', 'Rusizi', 'Rutsiro', 'Rwamagana',
 ]
 
-type FormState = AddEquipmentPayload
+type FormState = AddEquipmentPayload & { imageUrl: string }
 
 const empty: FormState = {
   name: '', description: '', category: '', dailyPrice: '',

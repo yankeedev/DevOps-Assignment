@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { ApprovalStatus, OwnerEquipment, PublicEquipment } from '../types/equipment'
 
 interface Props {
@@ -15,7 +16,8 @@ export default function EquipmentCard({ equipment, showStatus = false }: Props) 
   const owner = equipment as OwnerEquipment
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+      <Link to={showStatus ? '#' : `/equipment/${equipment.id}`} className={showStatus ? 'pointer-events-none' : ''}>
       {equipment.imageUrl ? (
         <img
           src={equipment.imageUrl}
@@ -28,6 +30,7 @@ export default function EquipmentCard({ equipment, showStatus = false }: Props) 
         </div>
       )}
 
+      </Link>
       <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-gray-900 text-base leading-tight">{equipment.name}</h3>

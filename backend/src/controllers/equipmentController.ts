@@ -53,9 +53,34 @@ export async function listAvailableEquipment(_req: AuthRequest, res: Response): 
       select: {
         id: true, name: true, description: true, category: true,
         dailyPrice: true, imageUrl: true, district: true, sector: true, createdAt: true,
+        owner: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
+    res.json({ data: equipment });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+}
+
+export async function getEquipmentById(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const equipment = await prisma.equipment.findUnique({
+      where: { id },
+      select: {
+        id: true, name: true, description: true, category: true,
+        dailyPrice: true, imageUrl: true, district: true, sector: true,
+        status: true, approvalStatus: true, createdAt: true,
+        owner: { select: { id: true, name: true } },
+      },
+    });
+    if (!equipment) { res.status(404).json({ error: "Equipment not found" }); return; }
+    if (equipment.approvalStatus !== "APPROVED") {
+      res.status(404).json({ error: "Equipment not found" });
+      return;
+    }
     res.json({ data: equipment });
   } catch (err) {
     console.error(err);
@@ -75,6 +100,43 @@ export async function listMyEquipment(req: AuthRequest, res: Response): Promise<
       orderBy: { createdAt: "desc" },
     });
     res.json({ data: equipment });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+}
+
+export async function updateEquipment(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.equipment.findUnique({ where: { id } });
+    if (!existing) { res.status(404).json({ error: "Equipment not found" }); return; }
+    if (existing.ownerId !== req.user!.userId) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    const { name, description, category, dailyPrice, imageUrl, district, sector, status } = req.body;
+    const price = dailyPrice !== undefined ? parseFloat(dailyPrice) : undefined;
+    if (price !== undefined && (isNaN(price) || price <= 0)) {
+      res.status(400).json({ error: "dailyPrice must be a positive number" });
+      return;
+    }
+
+    const updated = await prisma.equipment.update({
+      where: { id },
+      data: {
+        ...(name ? { name: name.trim() } : {}),
+        ...(description ? { description: description.trim() } : {}),
+        ...(category ? { category: category.trim() } : {}),
+        ...(price !== undefined ? { dailyPrice: price } : {}),
+        ...(imageUrl !== undefined ? { imageUrl: imageUrl?.trim() || null } : {}),
+        ...(district ? { district: district.trim() } : {}),
+        ...(sector ? { sector: sector.trim() } : {}),
+        ...(status ? { status } : {}),
+      },
+    });
+    res.json({ data: updated });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
