@@ -169,8 +169,6 @@ export async function adminListShops(_req: AuthRequest, res: Response): Promise<
 export async function adminCreateShop(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { name, description, phone, address, district, sector, ownerId } = req.body;
-    const missing = (["name", "description", "phone", "address", "district", "sector", "ownerId"] as const)
-      .filter(f => !req.body[f]?.trim?.() && req.body[f] === undefined ? true : !req.body[f]);
     if (!name || !description || !phone || !address || !district || !sector || !ownerId) {
       res.status(400).json({ error: "All fields including ownerId are required" });
       return;
