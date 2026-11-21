@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: AgriRent CI
 
 on:
@@ -88,3 +89,134 @@ jobs:
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
         run: docker build -t my-app:ci .
+=======
+name: AgriRent CI
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+
+  structure:
+    name: validate code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: checks worksplace structure 
+        run: |
+          echo "running background srtucture checks..."
+          ls -la
+
+  checks:
+    name: ${{ matrix.app-name }} checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app-name: Backend
+            working-directory: backend
+            lockfile: backend/package-lock.json
+            lint-tools: eslint@^9 @eslint/js@^9 globals typescript-eslint
+            lint-command: npx eslint src
+            test-command: ""
+            build-command: npm run build
+          - app-name: Frontend
+            working-directory: frontend
+            lockfile: frontend/package-lock.json
+            lint-tools: eslint@^9 @eslint/js@^9 globals typescript-eslint eslint-plugin-react jiti stylelint stylelint-config-standard
+            lint-command: |
+              npx eslint src
+              npx stylelint "src/**/*.css"
+            test-command: npm test
+            build-command: npm run build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.lockfile }}
+
+      - name: Dependencies
+        run: npm ci
+        working-directory: ${{ matrix.working-directory }}
+      - name: dependencies audit
+        run: npm audit
+        working-directory: ${{ matrix.working-directory }}
+
+
+
+
+      - name: Lint tools
+        if: matrix.lint-tools != ''
+        run: npm install --no-save --package-lock=false ${{ matrix.lint-tools }}
+        working-directory: ${{ matrix.working-directory }}
+
+      - name: Lint
+        if: matrix.lint-command != ''
+        run: ${{ matrix.lint-command }}
+        working-directory: ${{ matrix.working-directory }}
+
+      - name: Tests
+        if: matrix.test-command != ''
+        run: ${{ matrix.test-command }}
+        working-directory: ${{ matrix.working-directory }}
+
+      - name: Build
+        if: matrix.build-command != ''
+        run: ${{ matrix.build-command }}
+        working-directory: ${{ matrix.working-directory }}
+    
+        
+  docker:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: checks
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Build Docker image
+        if: hashFiles('Dockerfile') != ''
+        run: docker build -t my-app:ci .
+
+
+      - name: Run trivy container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'my-app:ci'
+          format: 'table'
+          severity: 'CRITICAL'
+          exit-code : '1'
+          ignore-unfixed : 'true'
+      
+      - name: Run tfsec IaC scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: '.'
+          soft_fail: false  
+>>>>>>> main
