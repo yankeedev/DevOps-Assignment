@@ -1,149 +1,308 @@
 # AWS Infrastructure with Terraform
 
-This directory contains the Terraform configuration for the AWS infrastructure used by the project. It creates:
+This directory contains the Terraform configuration for deploying
+the AgriRent application infrastructure on AWS.
 
-- A VPC with DNS hostnames and DNS support enabled.
-- A public subnet that automatically assigns public IPv4 addresses.
-- An Internet Gateway and a public route table with a default route to the internet.
-- A security group for the application server.
-- One EC2 instance with an encrypted `gp3` root volume and a public IPv4 address.
+## Architecture
 
-The VPC provides an isolated network for the deployment. The public subnet gives the instance a place to run, while the Internet Gateway and route table allow internet traffic to and from that subnet. The security group allows SSH on port 22 only from the configured trusted CIDR, and allows the backend API on port 5000 and frontend on port 4173 from the internet. The EC2 instance is the application host.
+The infrastructure consists of:
 
-Terraform only creates the AWS infrastructure. Ansible handles server configuration and application deployment separately.
+- A VPC with public and private subnets.
+- An Internet Gateway for public internet connectivity.
+- A NAT Gateway for outbound internet access from private resources.
+- A Bastion Host in a public subnet.
+- A private application EC2 instance.
+- An Application Load Balancer for public application access.
+- A managed PostgreSQL database using Amazon RDS.
+- A private Amazon ECR repository for Docker images.
+- Security Groups controlling communication between resources.
+- IAM permissions allowing the application EC2 instance to access ECR
+  and retrieve database credentials from Secrets Manager.
+
+## Network Architecture
+
+### Public Subnets
+
+The public subnets contain:
+
+- Bastion Host.
+- Application Load Balancer.
+- NAT Gateway.
+
+### Private Subnets
+
+The private subnets contain:
+
+- Application EC2 instance.
+- Managed PostgreSQL database.
+
+The application EC2 instance does not have a public IP address.
+
+All SSH access to the application instance must pass through
+the Bastion Host.
+
+The database is not publicly accessible.
+
+## Security Groups
+
+The configuration uses separate security groups:
+
+| Security Group | Allowed Traffic |
+|---|---|
+| ALB Security Group | HTTP from the internet |
+| Bastion Security Group | SSH from trusted public IP |
+| Application Security Group | SSH from Bastion, application traffic from ALB |
+| Database Security Group | PostgreSQL from application EC2 only |
 
 ## Prerequisites
 
-Before starting, make sure you have:
+Before deploying, make sure you have:
 
-- An AWS account and an IAM user with permission to create and manage the VPC, subnet, Internet Gateway, route table, security group, and EC2 resources used by this configuration.
-- The AWS CLI installed and configured with credentials for that IAM user.
+- An AWS account.
+- AWS CLI installed and configured.
 - Terraform installed.
-- An existing EC2 key pair in the AWS region you will use.
-- The SSH private key that corresponds to that EC2 key pair.
+- Docker installed.
+- An existing EC2 key pair in your selected AWS region.
+- The corresponding SSH private key.
+- An Ubuntu AMI ID compatible with your selected AWS region.
 
-Confirm that the AWS CLI is using the expected account:
+Confirm your AWS identity:
 
 ```bash
 aws sts get-caller-identity
 ```
 
-Never put AWS credentials or an SSH private key in this directory, `terraform.tfvars`, or source control.
+Never commit AWS credentials, SSH private keys, or database passwords
+to the repository.
 
-## Configure variables
+## Configure Variables
 
-Run the following commands from the repository root to create your local variables file:
+From the repository root:
 
 ```bash
 cd terraform
+```
+
+Create your local variables file.
+
+Linux/macOS:
+
+```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-On Windows PowerShell, use this equivalent copy command:
+Windows PowerShell:
 
 ```powershell
 Copy-Item terraform.tfvars.example terraform.tfvars
 ```
 
-Edit `terraform.tfvars` and replace the placeholders:
+Edit `terraform.tfvars` and replace the placeholders.
 
-- `project_name`: Name used in resource tags and names. The example uses `my-application`.
-- `environment`: Environment name used in resource tags and names, such as `dev`.
-- `aws_region`: AWS region where the resources will be created.
-- `ami_id`: An Ubuntu-compatible AMI ID available in the selected region.
-- `instance_type`: EC2 instance type, such as `t3.micro`.
-- `key_pair_name`: Name of the existing EC2 key pair in the selected region.
-- `ssh_allowed_cidr`: The trusted public IP address allowed to connect over SSH.
-- `root_volume_size`: Size of the encrypted EC2 root volume in gigabytes.
+Important variables:
 
-Use a `/32` CIDR for `ssh_allowed_cidr`, for example `203.0.113.10/32`, to allow SSH from one trusted public IP address only. Do not use `0.0.0.0/0` for SSH access because it exposes port 22 to the entire internet.
+| Variable | Purpose |
+|---|---|
+| project_name | Project name |
+| environment | Deployment environment |
+| aws_region | AWS deployment region |
+| ami_id | Ubuntu AMI ID |
+| instance_type | Application EC2 instance type |
+| bastion_instance_type | Bastion EC2 instance type |
+| key_pair_name | Existing AWS EC2 key pair |
+| ssh_allowed_cidr | Trusted public IP allowed to SSH into Bastion |
+| db_name | PostgreSQL database name |
+| db_username | PostgreSQL master username |
+| ecr_repository_name | Private ECR repository name |
 
-The example file is safe to commit because it contains placeholders. Keep your local `terraform.tfvars` untracked; it contains environment-specific configuration.
+Use `/32` for the SSH CIDR to restrict access to one public IP address.
 
-## Initialize, format, and validate
+Do not use `0.0.0.0/0` for SSH access.
 
-Run these commands from the `terraform` directory:
+## Initialize Terraform
+
+Run:
 
 ```bash
 terraform init
 ```
 
-`terraform init` downloads the required AWS provider and initializes the working directory.
+This downloads the required Terraform providers and initializes
+the working directory.
+
+## Format and Validate
+
+Format the configuration:
 
 ```bash
 terraform fmt
 ```
 
-`terraform fmt` formats the Terraform files using Terraform's standard style.
+Validate the configuration:
 
 ```bash
 terraform validate
 ```
 
-`terraform validate` checks that the configuration is syntactically valid and internally consistent. It does not create AWS resources.
+## Review the Infrastructure Plan
 
-## Review and apply the deployment
-
-Create a deployment plan before making changes:
+Run:
 
 ```bash
 terraform plan -var-file="terraform.tfvars"
 ```
 
-The plan shows which resources Terraform intends to create, change, or destroy. Review it carefully, especially the AWS region, AMI, instance type, key pair, and allowed SSH address.
+Review the resources Terraform intends to create.
 
-Apply the approved plan:
+Pay attention to:
+
+- AWS region.
+- VPC and subnet CIDRs.
+- EC2 instance types.
+- Security Group rules.
+- RDS configuration.
+- NAT Gateway and other resources that incur costs.
+
+## Deploy the Infrastructure
+
+Run:
 
 ```bash
 terraform apply -var-file="terraform.tfvars"
 ```
 
-Terraform displays the proposed changes again. Type `yes` only after verifying that the plan is expected. The first deployment may take a few minutes while AWS creates the network and EC2 resources.
+Review the proposed changes and type `yes` when you are ready.
 
-## View outputs and access the infrastructure
+Terraform creates the AWS infrastructure.
 
-Display the values exported by the configuration:
+## Push the Application Image to Private ECR
 
-```bash
-terraform output
-```
-
-The outputs include the VPC, subnet, security group, and instance IDs, the instance's private and public IP addresses, and `application_url`.
-
-Retrieve only the EC2 public IP when needed:
+After Terraform creates the ECR repository, retrieve its URL:
 
 ```bash
-terraform output -raw instance_public_ip
+terraform output -raw ecr_repository_url
 ```
 
-Use the `application_url` output to open the frontend in a browser. It points to the instance's public IP on port 4173:
+Authenticate Docker with Amazon ECR:
+
+```bash
+aws ecr get-login-password --region YOUR_AWS_REGION | docker login --username AWS --password-stdin YOUR_ECR_REPOSITORY_URL
+```
+
+Build the AgriRent application image:
+
+```bash
+docker build -t agrirent-app:v1 .
+```
+
+Tag the image for ECR:
+
+```bash
+docker tag agrirent-app:v1 YOUR_ECR_REPOSITORY_URL:v1
+```
+
+Push the image:
+
+```bash
+docker push YOUR_ECR_REPOSITORY_URL:v1
+```
+
+Replace the placeholders with the actual AWS region and ECR repository URL.
+
+The application EC2 instance has an IAM role that allows it to pull
+images from the private ECR repository.
+
+## Application Deployment with Ansible
+
+Terraform handles infrastructure provisioning.
+
+Ansible handles application deployment and server configuration.
+
+The deployment process should:
+
+1. Connect to the Bastion Host.
+2. Access the private application EC2 instance through the Bastion.
+3. Authenticate with private ECR.
+4. Pull the AgriRent application image.
+5. Configure the application environment.
+6. Retrieve the database credentials from AWS Secrets Manager.
+7. Configure the PostgreSQL database connection.
+8. Start the application container.
+
+The application EC2 instance is not directly accessible from the internet.
+
+## Access the Application
+
+Retrieve the application URL:
 
 ```bash
 terraform output -raw application_url
 ```
 
-SSH access depends on both the security group allowing your current public IP through `ssh_allowed_cidr` and your using the private key that matches `key_pair_name`. For an Ubuntu AMI, the SSH username is usually `ubuntu`:
+Open the returned URL in your browser.
+
+Public application traffic is received by the Application Load Balancer,
+which forwards requests to the private application EC2 instance.
+
+## Access the Bastion Host
+
+Retrieve the Bastion public IP:
 
 ```bash
-ssh -i /path/to/private-key.pem ubuntu@$(terraform output -raw instance_public_ip)
+terraform output -raw bastion_public_ip
 ```
 
-Replace `/path/to/private-key.pem` with the path to your private key. Do not add the private key to the repository.
+Connect using your private SSH key:
 
-## Destroy the infrastructure
+```bash
+ssh -i /path/to/private-key.pem ubuntu@BASTION_PUBLIC_IP
+```
 
-When the environment is no longer needed, review and remove the resources managed by this Terraform configuration:
+Replace the private key path and Bastion public IP.
+
+## Retrieve Infrastructure Outputs
+
+Display all outputs:
+
+```bash
+terraform output
+```
+
+Useful outputs include:
+
+- VPC ID.
+- Public and private subnet IDs.
+- Bastion instance ID and public IP.
+- Application instance ID and private IP.
+- Application Load Balancer DNS.
+- RDS database endpoint.
+- Database secret ARN.
+- Private ECR repository URL.
+
+## Destroy Infrastructure
+
+When the environment is no longer required:
 
 ```bash
 terraform destroy -var-file="terraform.tfvars"
 ```
 
-Terraform shows a destruction plan and asks for confirmation. Verify the resources and the selected AWS account and region before typing `yes`. Destroying the configuration removes the VPC, subnet, networking resources, security group, and EC2 instance managed here; back up anything important first.
+Review the destruction plan before confirming.
 
-## Important notes
+Destroying the infrastructure removes the resources managed by
+this Terraform configuration.
 
-- Do not commit `.terraform/`. It contains downloaded provider files and local working-directory data that can be recreated with `terraform init`.
-- Do not commit Terraform state files such as `terraform.tfstate` or `terraform.tfstate.*`. State can contain sensitive infrastructure details and should be stored securely; team or production environments should use a protected remote backend.
-- Commit `.terraform.lock.hcl`. It records the selected provider versions and checksums so other users and environments initialize consistently.
-- Keep `terraform.tfvars` untracked because it contains environment-specific values. Commit only `terraform.tfvars.example` with placeholders.
-- AWS resources, including the EC2 instance, storage, and public networking, may incur costs. Review the plan and destroy resources when they are no longer required.
+Back up important database data before destroying the database.
+
+## Important Notes
+
+- Never commit `terraform.tfvars`.
+- Never commit AWS credentials or SSH private keys.
+- Never commit Terraform state files.
+- Commit `.terraform.lock.hcl`.
+- Do not expose the application EC2 instance directly to the internet.
+- Do not make the RDS database publicly accessible.
+- Restrict Bastion SSH access to a trusted IP address.
+- AWS resources may incur charges, including EC2, RDS, ALB, NAT Gateway,
+  EBS storage, and data transfer.
+- Destroy resources when they are no longer required.

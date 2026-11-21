@@ -10,8 +10,10 @@ export interface PublicEquipment {
   imageUrl:    string | null
   district:    string
   sector:      string
+  status:      EquipmentStatus
   createdAt:   string
   owner?:      { id: string; name: string }
+  bookings?:   { startDate: string; endDate: string }[]
 }
 
 export interface OwnerEquipment extends PublicEquipment {
