@@ -38,7 +38,7 @@ jobs:
           - app-name: frontend
             working-directory: frontend
             lockfile: frontend/package-lock.json
-            lint-tools: eslint@^9 @eslint/js@^9 globals typescript-eslint eslint
+            lint-tools: eslint@^9 @eslint/js@^9 globals typescript-eslint eslint-plugin-react jiti stylelint stylelint-config-standard
             lint-command: |
               npx eslint src
               npx stylelint "src/**/*.css"
