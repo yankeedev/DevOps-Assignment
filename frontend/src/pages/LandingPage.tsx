@@ -1,6 +1,10 @@
-﻿import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/dashboard" replace />;
   return (
     <div className="min-h-screen bg-white text-[var(--color-charcoal)]">
       {/* Navbar */}
@@ -12,13 +16,6 @@ export default function LandingPage() {
             </div>
             <span className="text-lg font-bold">AgriRent</span>
           </Link>
-
-          <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-            <a href="#features" className="hover:text-[var(--color-primary)]">Features</a>
-            <a href="#how-it-works" className="hover:text-[var(--color-primary)]">How it works</a>
-            <a href="#marketplace" className="hover:text-[var(--color-primary)]">Marketplace</a>
-            <a href="#contact" className="hover:text-[var(--color-primary)]">Contact</a>
-          </nav>
 
           <div className="flex items-center gap-3">
             <Link to="/login" className="hidden px-3 py-2 text-sm font-medium hover:text-[var(--color-primary)] sm:inline-block">
@@ -39,26 +36,26 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:py-24">
           <div>
             <p className="mb-4 inline-flex items-center rounded-full bg-[var(--color-sprout)]/40 px-3 py-1 text-sm font-medium text-[var(--color-primary-dark)]">
-              Agricultural Marketplace & Linkage Platform
+              Agricultural Equipment Rental Platform — Rwanda
             </p>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-              Connect farmers to buyers across Africa
+              Rent farming equipment, find supplies nearby
             </h1>
             <p className="mt-6 max-w-xl text-lg text-[var(--color-slate)]">
-              AgriRent helps farmers list their produce, reach verified buyers and build direct market linkages with less hassle. Built for real African agricultural trade.
+              AgriRent connects smallholder farmers with equipment owners and local supply shops across Rwanda. Browse tillers, irrigation pumps, sprayers and more — or list your idle equipment to earn income.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 to="/register"
                 className="rounded-lg bg-[var(--color-primary)] px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-[var(--color-primary-dark)]"
               >
-                List or buy produce
+                Get started
               </Link>
               <Link
                 to="/equipment"
                 className="rounded-lg border border-black/10 px-6 py-3 text-base font-semibold transition hover:bg-[var(--color-cloud)]"
               >
-                Browse marketplace
+                Browse equipment
               </Link>
             </div>
           </div>
@@ -70,9 +67,12 @@ export default function LandingPage() {
               <div className="aspect-[4/3] w-full bg-gradient-to-br from-[var(--color-primary)]/10 via-white to-[var(--color-sprout)]/40">
                 <div className="flex h-full items-center justify-center p-6 text-center">
                   <div>
-                    <p className="text-lg font-semibold">Agricultural Marketplace</p>
+                    <p className="text-lg font-semibold">Equipment Rental Marketplace</p>
                     <p className="mt-2 text-sm text-[var(--color-slate)]">
-                      Farm produce • Market linkages • Middleware driven listings
+                      Tractors • Irrigation pumps • Sprayers • Tillers • Seeders
+                    </p>
+                    <p className="mt-3 text-sm text-[var(--color-slate)]">
+                      Find farm supplies • Seeds • Fertilizers • Pesticides
                     </p>
                   </div>
                 </div>

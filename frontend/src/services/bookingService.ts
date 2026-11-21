@@ -18,7 +18,9 @@ export interface Booking {
     district: string
     sector: string
     imageUrl: string | null
+    dailyPrice?: string
   }
+  owner?: { id: string; name: string }
   farmer?: { id: string; name: string; email: string }
 }
 
