@@ -171,4 +171,3 @@ export async function deleteEquipment(req: AuthRequest, res: Response): Promise<
     res.status(500).json({ error: "Server error" });
   }
 }
->>>>>>> main

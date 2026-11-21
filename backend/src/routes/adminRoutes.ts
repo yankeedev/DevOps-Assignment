@@ -1,22 +1,3 @@
-<<<<<<<<< Temporary merge branch 1
-import { Router } from "express";
-import {
-  listPendingEquipment,
-  approveEquipment,
-  rejectEquipment,
-} from "../controllers/adminEquipmentController";
-import { requireAuth, requireRole } from "../middleware/auth.middleware";
-
-const router = Router();
-
-router.use(requireAuth, requireRole("ADMIN"));
-
-router.get("/equipment/pending", listPendingEquipment);
-router.patch("/equipment/:id/approve", approveEquipment);
-router.patch("/equipment/:id/reject", rejectEquipment);
-
-export default router;
-=========
 import { Router } from "express";
 import {
   getStats,
@@ -56,4 +37,3 @@ router.patch("/shops/:id/products/:productId", adminUpdateProduct);
 router.delete("/shops/:id/products/:productId", adminDeleteProduct);
 
 export default router;
->>>>>>> main

@@ -296,4 +296,3 @@ export async function adminDeleteProduct(req: AuthRequest, res: Response): Promi
     res.status(500).json({ error: "Server error" });
   }
 }
->>>>>>> main
