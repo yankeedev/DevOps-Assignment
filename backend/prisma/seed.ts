@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
@@ -213,6 +213,8 @@ main()
   })
   .finally(() => prisma.$disconnect())
 =======
+=======
+>>>>>>> 4d36f15a49cb4ddf572050db4392a187766c1c6d
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
@@ -436,4 +438,4 @@ main()
     process.exit(1)
   })
   .finally(() => prisma.$disconnect())
->>>>>>> main
+

@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+<<<<<<<<< Temporary merge branch 1
 import { Router } from "express";
 import {
   listPendingEquipment,
@@ -16,7 +16,7 @@ router.patch("/equipment/:id/approve", approveEquipment);
 router.patch("/equipment/:id/reject", rejectEquipment);
 
 export default router;
-=======
+=========
 import { Router } from "express";
 import {
   getStats,

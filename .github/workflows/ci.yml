@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 name: AgriRent CI
 
 on:
@@ -90,6 +91,8 @@ jobs:
         if: hashFiles('Dockerfile') != ''
         run: docker build -t my-app:ci .
 =======
+=======
+>>>>>>> 4d36f15a49cb4ddf572050db4392a187766c1c6d
 name: AgriRent CI
 
 on:
@@ -218,5 +221,9 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
           working_directory: '.'
+<<<<<<< HEAD
           soft_fail: false  
 >>>>>>> main
+=======
+          soft_fail: false  
+>>>>>>> 4d36f15a49cb4ddf572050db4392a187766c1c6d

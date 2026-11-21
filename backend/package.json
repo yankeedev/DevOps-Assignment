@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+<<<<<<<<< Temporary merge branch 1
 {
   "name": "agrirent-backend",
   "version": "1.0.0",
@@ -38,7 +38,7 @@
     "typescript": "^5.7.2"
   }
 }
-=======
+=========
 {
   "name": "agrirent-backend",
   "version": "1.0.0",

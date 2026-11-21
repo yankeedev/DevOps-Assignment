@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+<<<<<<<<< Temporary merge branch 1
 import "dotenv/config";
 import express from "express";
 import path from "path";
@@ -87,7 +87,7 @@ if (require.main === module) {
 }
 
 export default app;
-=======
+=========
 import "dotenv/config";
 import express from "express";
 import path from "path";

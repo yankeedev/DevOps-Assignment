@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+<<<<<<<<< Temporary merge branch 1
 import { Router } from "express";
 import {
   createEquipment,
@@ -14,7 +14,7 @@ router.get("/mine", requireAuth, requireRole("EQUIPMENT_OWNER"), listMyEquipment
 router.post("/", requireAuth, requireRole("EQUIPMENT_OWNER"), createEquipment);
 
 export default router;
-=======
+=========
 import { Router } from "express";
 import {
   createEquipment,
