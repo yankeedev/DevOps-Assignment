@@ -88,6 +88,7 @@ async function main() {
       district:    'Gasabo',
       sector:      'Bumbogo',
       ownerId:     farmer1.id,
+      imageUrl:    'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[1]!,
@@ -98,6 +99,7 @@ async function main() {
       district:    'Rulindo',
       sector:      'Bushoki',
       ownerId:     farmer2.id,
+      imageUrl:    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[2]!,
@@ -108,6 +110,7 @@ async function main() {
       district:    'Gicumbi',
       sector:      'Byumba',
       ownerId:     farmer1.id,
+      imageUrl:    'https://images.unsplash.com/photo-1601593346740-925612772716?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[3]!,
@@ -118,6 +121,7 @@ async function main() {
       district:    'Bugesera',
       sector:      'Nyamata',
       ownerId:     farmer2.id,
+      imageUrl:    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[4]!,
@@ -128,6 +132,7 @@ async function main() {
       district:    'Rwamagana',
       sector:      'Kigabiro',
       ownerId:     farmer1.id,
+      imageUrl:    'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[5]!,
@@ -138,6 +143,7 @@ async function main() {
       district:    'Musanze',
       sector:      'Muhoza',
       ownerId:     farmer2.id,
+      imageUrl:    'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[6]!,
@@ -148,6 +154,7 @@ async function main() {
       district:    'Nyagatare',
       sector:      'Nyagatare',
       ownerId:     farmer1.id,
+      imageUrl:    'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[7]!,
@@ -158,6 +165,7 @@ async function main() {
       district:    'Huye',
       sector:      'Ngoma',
       ownerId:     farmer2.id,
+      imageUrl:    'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[8]!,
@@ -168,6 +176,7 @@ async function main() {
       district:    'Kirehe',
       sector:      'Kirehe',
       ownerId:     farmer1.id,
+      imageUrl:    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&auto=format&fit=crop',
     },
     {
       id:          EQUIPMENT_IDS[9]!,
@@ -178,13 +187,14 @@ async function main() {
       district:    'Kayonza',
       sector:      'Mukarange',
       ownerId:     farmer2.id,
+      imageUrl:    'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=600&auto=format&fit=crop',
     },
   ]
 
   for (const eq of equipmentData) {
     const record = await prisma.equipment.upsert({
       where:  { id: eq.id },
-      update: {},
+      update: { imageUrl: eq.imageUrl },
       create: {
         id:             eq.id,
         name:           eq.name,
@@ -193,7 +203,7 @@ async function main() {
         dailyPrice:     eq.dailyPrice,
         status:         'AVAILABLE',
         approvalStatus: 'APPROVED',
-        imageUrl:       null,
+        imageUrl:       eq.imageUrl,
         district:       eq.district,
         sector:         eq.sector,
         ownerId:        eq.ownerId,

@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
-const backendBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const backendBaseUrl = "http://localhost:5001";
 
 export const api = axios.create({
   baseURL: backendBaseUrl,
