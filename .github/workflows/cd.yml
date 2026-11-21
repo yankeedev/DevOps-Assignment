@@ -21,7 +21,7 @@ env:
 
 jobs:
   check:
-    name:${{ matrix.app-name }} checks
+    -name: ${{ matrix.app-name }} checks
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -48,7 +48,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-       -name :setup node
+      - name : setup node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -57,14 +57,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: ${{ matrix.working-directory }}
-      -name: dependencies audit
+      - name: dependencies audit
         run: npm audit   --audit-level=high
         working-directory: ${{ matrix.working-directory }} 
 
-       -name: install lint tools
-       if matrix.lint-tools != ''
-       run: npm install --nosave ${{ matrix.lint-tools }}
-       working-directory: ${{ matrix.working-directory }}
+      - name: install lint tools
+        if: matrix.lint-tools != ''
+        run: npm install --nosave ${{ matrix.lint-tools }}
+        working-directory: ${{ matrix.working-directory }}
 
       - name: Lint
         if: matrix.lint-command != ''
@@ -76,7 +76,7 @@ jobs:
         run: ${{ matrix.test-command }}
         working-directory: ${{ matrix.working-directory }}
 
-       -name: Build
+      - name: Build
         if: matrix.build-command != ''
         run: ${{ matrix.build-command }}
         working-directory: ${{ matrix.working-directory }}
@@ -98,98 +98,96 @@ iac_scan:
 
       
 build_scan_push:
-name: build, verify and deploy image
-    runs-on: ubuntu-latest
-    timeout-minutes: 39
-    needs:
-      - check
-      - iac_scan
-    outputs:
-    image_url:${{ steps.build.outputs.image_url }}
-
-    steps
-    -name: Checkout
+  name: build, verify and deploy image
+  runs-on: ubuntu-latest
+  timeout-minutes: 39
+  needs:
+    - check
+    - iac_scan
+  outputs:
+    image_url: ${{ steps.build.outputs.image_url }}
+  steps:
+    - name: Checkout
       uses: actions/checkout@v7
 
-    -name: Configure AWS credentials
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ vars.AWS_ROLE_ARN }}
         aws-region: ${{ env.AWS_REGION }}
 
-    -name: Login to Amazon ECR
+    - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-      name set image-url
-      id :image
+    - name: Set image url
+      id: image
       shell: bash
-      run:
-      registry=${{ steps.login-ecr.outputs.registry }}
-      image_url="${registry}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE
-      echo "image_url=${image_url}" >> $"GITHUB_ENV"
-      echo "image_url=${image_url}" >> $"GITHUB_OUTPUT"
-
-     -name build docker img
-     if: hashFiles('Dockerfile') != ''
-     docker build -t "$IMAGE_URI" -t "${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:latest" .
-
-    -name run trivy container scan
-     uses: aquasecurity/trivy-action@0.28.0
-     with:
-       scan-type: 'image'
-       image-ref: ${{ env.image_url }}
-       format: 'table'
-       severity: 'CRITICAL'
-       exit-code : '1'
-       ignore-unfixed : 'true'
-     -name push docker img
       run: |
-          docker push "$IMAGE_URI"
-          docker push "${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:latest"
+        registry=${{ steps.login-ecr.outputs.registry }}
+        image_url="${registry}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+        echo "image_url=${image_url}" >> "$GITHUB_ENV"
+        echo "image_url=${image_url}" >> "$GITHUB_OUTPUT"
 
+    - name: Build Docker image
+      if: hashFiles('Dockerfile') != ''
+      run: |
+        docker build -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
 
-deploy:
-   name: deploy to production
-   runs-on: ubuntu-latest 
-   timeout-minutes: 30
-   needds:
-    -build_scan_push
-   environment:
-    name: production
-    url: ${{ steps.deploy.outputs.web_url }}
-   steps:
-     -name: Checkout
-      uses: actions/checkout@v7
-
-     -name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - name: Run Trivy container scan
+      uses: aquasecurity/trivy-action@0.28.0
       with:
-        role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
-        aws-region: ${{ env.AWS_REGION }}
+        scan-type: 'image'
+        image-ref: ${{ env.image_url }}
+        format: 'table'
+        severity: 'CRITICAL'
+        exit-code: '1'
+        ignore-unfixed: 'true'
 
-     -name: install ansible & dependencies
+    - name: Push Docker img
       run: |
-       pipx install ansible --include-deps ansible
-       ansible-galaxy collection install  -r ansible/requirements.yml
-    -name: configure ssh for ansible
-      shell : bash
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-      
-     -name: config ansible vaultt pass 
-     shell: bash
-      
-       run: |
+        docker push "$image_url"
+        docker push "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest"
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - build_scan_push
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: install ansible and dependencies
+        run: |
+          pipx install --include-deps ansible
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Configure SSH for Ansible
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Configure Ansible Vault password
+        shell: bash
+        run: |
           echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > ~/.ansible_vault_pass
           chmod 600 ~/.ansible_vault_pass
 
-      -name: run ansible playbook
-      working-directory: ansible
-      env:
-        ANSIBLE_HOST_KEY_CHECKING: false
-
-      run: |
-       ansible-playbook site.yml
+      - name: run ansible playbook
+        working-directory: ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          ansible-playbook site.yml
