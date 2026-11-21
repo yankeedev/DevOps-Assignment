@@ -148,7 +148,7 @@ build_scan_push:
       run: |
         docker push "$image_url"
         docker push "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest"
-deploy:
+  deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -166,28 +166,28 @@ deploy:
           role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-    -name: install ansible & dependencies
-    run: |
-       pipx install ansible --include-deps ansible
-       ansible-galaxy collection install  -r ansible/requirements.yml
-    -name: configure ssh for ansible
-    shell : bash
-    run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-      
-    -name: config ansible vaultt pass 
-    shell: bash
-      
-    run: |
+      - name: install ansible and dependencies
+        run: |
+          pipx install --include-deps ansible
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Configure SSH for Ansible
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Configure Ansible Vault password
+        shell: bash
+        run: |
           echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > ~/.ansible_vault_pass
           chmod 600 ~/.ansible_vault_pass
 
-    -name: run ansible playbook
-    working-directory: ansible
-    env:
-        ANSIBLE_HOST_KEY_CHECKING: false
-
-     run: |
-       ansible-playbook site.yml
+      - name: run ansible playbook
+        working-directory: ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          ansible-playbook site.yml
