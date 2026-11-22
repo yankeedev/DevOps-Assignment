@@ -1,11 +1,11 @@
-name : Deploy to Production
+name: Deploy to Production
 
-on :
+on:
   push:
     branches:
       - main
 
-cocnurrency:
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
@@ -21,11 +21,11 @@ env:
 
 jobs:
   check:
-    -name: ${{ matrix.app-name }} checks
+    name: ${{ matrix.app-name }} checks
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
-      fail -fast : false
+      fail-fast: false
       matrix:
         include:
           - app-name: backend
@@ -38,7 +38,7 @@ jobs:
           - app-name: frontend
             working-directory: frontend
             lockfile: frontend/package-lock.json
-            lint-tools: eslint@^9 @eslint/js@^9 globals typescript-eslint eslint
+            lint-tools: eslint@^9 @eslint/js@^9 globals typescript-eslint eslint-plugin-react jiti stylelint stylelint-config-standard
             lint-command: |
               npx eslint src
               npx stylelint "src/**/*.css"
@@ -48,7 +48,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name : setup node
+      - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -82,7 +82,7 @@ jobs:
         working-directory: ${{ matrix.working-directory }}
 
 
-iac_scan:
+  iac_scan:
     name: IaC securiity check
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -90,64 +90,67 @@ iac_scan:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name : run tfsec
+      - name: run tfsec
         uses: aquasecurity/tfsec-action@v1.0.0
         with:
-        working-directory: terraform
-        soft_fail: false
+          working_directory: terraform
+          soft_fail: false
 
       
-build_scan_push:
-  name: build, verify and deploy image
-  runs-on: ubuntu-latest
-  timeout-minutes: 39
-  needs:
-    - check
-    - iac_scan
-  outputs:
-    image_url: ${{ steps.build.outputs.image_url }}
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v7
+  build_scan_push:
+    name: build, verify and deploy image
+    runs-on: ubuntu-latest
+    timeout-minutes: 39
+    needs:
+      - check
+      - iac_scan
+    outputs:
+      image_url: ${{ steps.image.outputs.image_url }}
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-        aws-region: ${{ env.AWS_REGION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
 
-    - name: Set image url
-      id: image
-      shell: bash
-      run: |
-        registry=${{ steps.login-ecr.outputs.registry }}
-        image_url="${registry}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
-        echo "image_url=${image_url}" >> "$GITHUB_ENV"
-        echo "image_url=${image_url}" >> "$GITHUB_OUTPUT"
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build Docker image
-      if: hashFiles('Dockerfile') != ''
-      run: |
-        docker build -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
+      - name: Set image url
+        id: image
+        shell: bash
+        run: |
+          registry=${{ steps.login-ecr.outputs.registry }}
+          image_url="${registry}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+          echo "image_url=${image_url}" >> "$GITHUB_ENV"
+          echo "image_url=${image_url}" >> "$GITHUB_OUTPUT"
 
-    - name: Run Trivy container scan
-      uses: aquasecurity/trivy-action@0.28.0
-      with:
-        scan-type: 'image'
-        image-ref: ${{ env.image_url }}
-        format: 'table'
-        severity: 'CRITICAL'
-        exit-code: '1'
-        ignore-unfixed: 'true'
+      - name: Build Docker image
+        if: hashFiles('Dockerfile') != ''
+        run: |
+          docker build -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
 
-    - name: Push Docker img
-      run: |
-        docker push "$image_url"
-        docker push "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest"
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ${{ env.image_url }}
+          format: 'table'
+          severity: 'CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: 'true'
+
+      - name: Push Docker img
+        run: |
+          docker push "$image_url"
+          docker push "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest"
+
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
@@ -163,7 +166,8 @@ build_scan_push:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: install ansible and dependencies
