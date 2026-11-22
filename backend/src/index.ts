@@ -12,16 +12,16 @@ import shopRoutes from "./routes/shopRoutes";
 
 const app = express();
 const frontendApp = express();
-const PORT = Number(process.env.PORT) || 5001;
+const PORT = Number(process.env.PORT) || 5000;
 const FRONTEND_PORT = Number(process.env.FRONTEND_PORT) || 4173;
 const frontendDist = path.resolve(__dirname, "../../frontend/dist");
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  "http://localhost:5174",
-  "http://localhost:4174",
-  "http://127.0.0.1:5174",
-  "http://127.0.0.1:4174",
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:4173",
 ].filter(Boolean) as string[];
 
 app.use(
@@ -74,7 +74,7 @@ if (require.main === module) {
   server.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code === "EADDRINUSE") {
       console.error(
-        `Port ${PORT} is already in use. Stop the other process (e.g. another "npm run dev") or set a different PORT in backend/.env`
+        `Port ${PORT} is already in use. Stop the other process or set a different PORT in backend/.env`
       );
       process.exit(1);
     }

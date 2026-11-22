@@ -127,5 +127,5 @@ variable "db_allocated_storage" {
 variable "ecr_repository_name" {
   description = "Name of the private ECR repository"
   type        = string
-  default     = "agrirent"
+  default     = "agrirent-app"
 }
