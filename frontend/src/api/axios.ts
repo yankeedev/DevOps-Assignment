@@ -6,6 +6,7 @@ export const api = axios.create({
   baseURL: backendBaseUrl,
   withCredentials: true,
 });
+//token
 
 let accessToken: string | null = null;
 export const setAccessToken = (t: string | null) => {

@@ -10,7 +10,6 @@ import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 import MyToolsPage from './pages/MyToolsPage'
-
 import ShopsPage from './pages/ShopsPage'
 
 export default function App() {
