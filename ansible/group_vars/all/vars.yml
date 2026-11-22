@@ -1,18 +1,23 @@
 ---
-# application identity
+# Application identity
 app_name: agrirent
 app_dir: /opt/agrirent
 
-# ports
+# AWS content
+aws_region: eu-north-1
+ecr_registry: "867133439555.dkr.ecr.eu-north-1.amazonaws.com"
+ecr_repository: agrirent-app
+ecr_image_tag: v1
+app_image: "{{ ecr_registry }}/{{ ecr_repository }}:{{ ecr_image_tag }}"
+
+# Application ports and health check
 app_backend_port: 5000
 app_frontend_port: 4173
-
-# health check
 app_health_url: "http://127.0.0.1:5000/health"
 app_health_retries: 10
 app_health_delay: 3
 
-# firewall 
+# firewall the app VM
 firewall_allowed_tcp:
   - "22"
   - "{{ app_backend_port }}"
@@ -25,12 +30,13 @@ ssh_login_grace_time: 20
 ssh_client_alive_interval: 300
 ssh_client_alive_count_max: 2
 
-# docker deamon log rotation
+# Docker log rotation
 docker_log_max_size: "10m"
 docker_log_max_file: "3"
 
-# postgress database
-postgres_user: postgres
+# RDS connection
+postgres_user: agrirent_admin
 postgres_db: agrirent
-postgres_host: db
+postgres_host: agrirent-dev-db.ch2iigosurjc.eu-north-1.rds.amazonaws.com
 postgres_port: 5432
+database_secret_arn: "arn:aws:secretsmanager:eu-north-1:867133439555:secret:rds!db-5adf5cc2-b221-4cd3-96a6-126a791efc8c-HY5fuX"

@@ -218,7 +218,7 @@ resource "aws_lb_listener_rule" "backend" {
 }
 
 resource "aws_db_subnet_group" "database" {
-  name = "${var.project_name}-${var.environment}-db-subnet-group"
+  name = "${replace(lower(var.project_name), "_", "-")}-${var.environment}-db-subnet-group"
 
   subnet_ids = [
     aws_subnet.private_a.id,
@@ -233,7 +233,7 @@ resource "aws_db_subnet_group" "database" {
 }
 
 resource "aws_db_instance" "database" {
-  identifier = "${var.project_name}-${var.environment}-database"
+  identifier = "${replace(lower(var.project_name), "_", "-")}-${var.environment}-db"
 
   engine         = "postgres"
   instance_class = var.db_instance_class
@@ -241,7 +241,6 @@ resource "aws_db_instance" "database" {
   allocated_storage = var.db_allocated_storage
   storage_type      = "gp3"
   storage_encrypted = true
-  kms_key_id        = "arn:aws:kms:eu-north-1:812114844665:key/808772fc-ffcb-4fb4-935d-0f2ebd813a9d"
 
   db_name  = var.db_name
   username = var.db_username
