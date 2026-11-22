@@ -45,7 +45,7 @@ resource "aws_iam_instance_profile" "app" {
   role = aws_iam_role.app.name
 }
 
-resource "aws_ecr_repositoty" "app" {
+resource "aws_ecr_repository" "app" {
   name = var.ecr_repository_name
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration {
