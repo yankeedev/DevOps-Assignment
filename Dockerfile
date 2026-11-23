@@ -27,7 +27,9 @@ ENV PORT=5000
 # install curl for health-checks and create a non-root user for security
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
     groupadd --system app && useradd --system --gid app --create-home --home-dir /home/app app && \
-    mkdir -p /app/backend /app/frontend
+    mkdir -p /app/backend /app/frontend && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 # Copy the built backend files and runtime dependencies
 COPY --from=backend-build /app/backend/package*.json ./backend/
