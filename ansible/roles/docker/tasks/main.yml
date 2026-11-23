@@ -1,4 +1,6 @@
-# docker compose plugin 
+---
+# Install or verify Docker Engine + Compose plugin.
+
 - name: Check if Docker CLI is available
   ansible.builtin.command:
     cmd: which docker
@@ -80,6 +82,38 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: true
+
+# ECR authentication
+
+- name: Check if AWS CLI is available
+  ansible.builtin.command:
+    cmd: which aws
+  register: aws_cli_bin
+  changed_when: false
+  failed_when: false
+
+- name: Install AWS CLI if missing
+  ansible.builtin.dnf:
+    name: awscli
+    state: present
+  when: aws_cli_bin.rc != 0
+
+- name: Get ECR authentication token
+  ansible.builtin.command:
+    cmd: "aws ecr get-login-password --region {{ aws_region }}"
+  register: ecr_token
+  changed_when: false
+  no_log: true
+  retries: 3
+  delay: 5
+  until: ecr_token.rc is defined and ecr_token.rc == 0
+
+- name: Authenticate Docker to ECR
+  ansible.builtin.command:
+    cmd: "docker login --username AWS --password-stdin {{ ecr_registry }}"
+    stdin: "{{ ecr_token.stdout }}"
+  changed_when: false
+  no_log: true
 
 - name: Verify Docker Compose is functional
   ansible.builtin.command:
