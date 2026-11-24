@@ -2,37 +2,25 @@
 
 # Building the frontend assets
 FROM node:22-bookworm-slim AS frontend-build
-
 WORKDIR /app/frontend
-
-# copy and install frontend dependencies
 COPY frontend/package*.json ./
 RUN npm ci
-
-# copy the frontend source and build production bundle
 COPY frontend/. .
 RUN npm run build
 
 # build backend typescript app
 FROM node:22-bookworm-slim AS backend-build
-
 WORKDIR /app/backend
-
-# Copy and install backend depencencies
 COPY backend/package*.json ./
 COPY backend/prisma ./prisma
 RUN npm ci
-
-# Copy backend source and generate Prisma client before compiling TypeScript
 COPY backend/. .
 RUN npx prisma generate
 RUN npm run build
 
 # Production runtime image for the application
 FROM node:22-bookworm-slim AS production
-
 WORKDIR /app
-
 ENV NODE_ENV=production
 ENV PORT=5000
 
@@ -40,7 +28,6 @@ ENV PORT=5000
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
     groupadd --system app && useradd --system --gid app --create-home --home-dir /home/app app && \
     mkdir -p /app/backend /app/frontend && \
-    chown -R app:app /app && \
     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
       /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
@@ -53,6 +40,10 @@ COPY --from=backend-build /app/backend/prisma ./backend/prisma
 # copy the built frontend bundle 
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
+# FIX: Ensure the 'app' user owns all files and has WRITE permissions
+RUN chown -R app:app /app /home/app && \
+    chmod -R u+w /app/backend/node_modules
+
 # switch to a non-root user before runtime
 USER app
 
@@ -63,5 +54,5 @@ EXPOSE 5000 4173
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -fsS http://localhost:5000/health || exit 1
 
-# Start the API and frontend static server
-CMD ["node", "/app/backend/dist/index.js"]
+# Start service in the same container. Node.js handles serving BOTH the API and Frontend.
+CMD ["sh", "-c", "cd /app/backend && ./node_modules/.bin/prisma db push; cd /app && node /app/backend/dist/index.js"]

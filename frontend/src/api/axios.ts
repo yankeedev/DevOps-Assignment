@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
-const backendBaseUrl = "http://localhost:5001";
+// Empty string means it will use the current origin (the ALB URL)
+const backendBaseUrl = "";
 
 export const api = axios.create({
   baseURL: backendBaseUrl,

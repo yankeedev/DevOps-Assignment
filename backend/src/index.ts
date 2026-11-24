@@ -16,30 +16,10 @@ const PORT = Number(process.env.PORT) || 5000;
 const FRONTEND_PORT = Number(process.env.FRONTEND_PORT) || 4173;
 const frontendDist = path.resolve(__dirname, "../../frontend/dist");
 
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:4173",
-].filter(Boolean) as string[];
-
+// We use a dynamic origin function to handle any URL (localhost, ALB, etc.)
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      const isLocalHost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-      if (isLocalHost) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error("Not allowed by CORS"));
-    },
+    origin: true, // This tells CORS to reflect the request's origin, allowing all domains
     credentials: true,
   })
 );
