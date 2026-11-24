@@ -150,7 +150,7 @@ jobs:
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
         run: |
-          docker build -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
+          docker build --no-cache -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
 
 
       - name: Run Trivy container scan
