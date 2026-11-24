@@ -16,7 +16,7 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION  || 'eu-north-1' }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'agrirent' }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'agrirent-app' }}
   IMAGE_TAG: ${{ github.sha }}  
   TF_woRKING_DIR: terraform
 
@@ -103,7 +103,7 @@ jobs:
   build_scan_push:
     name: build, verify and deploy image
     runs-on: ubuntu-latest
-    timeout-minutes: 39
+    timeout-minutes: 37
     needs:
       - check
       - iac_scan
@@ -120,6 +120,19 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
+      - name: Verify AWS account
+        run: |
+          echo "Checking AWS account..."
+          aws sts get-caller-identity
+
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+          if [ "$ACCOUNT_ID" != "812114844665" ]; then
+            echo "ERROR: GitHub Actions is connected to the wrong AWS account!"
+            exit 1
+          fi
+
+          echo "SUCCESS: GitHub Actions is connected to the correct AWS account."
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -138,6 +151,7 @@ jobs:
         if: hashFiles('Dockerfile') != ''
         run: |
           docker build -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
+
 
       - name: Run Trivy container scan
         uses: aquasecurity/trivy-action@master
@@ -172,7 +186,45 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Validate server IP variables
+        env:
+          BASTION_IP: ${{ vars.BASTION_IP }}
+          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
+        run: |
+          if [ -z "${BASTION_IP:-}" ]; then
+            echo "ERROR: BASTION_IP is missing. Set it as a repository or production environment variable."
+            exit 1
+          fi
 
+          if [ -z "${APP_PRIVATE_IP:-}" ]; then
+            echo "ERROR: APP_PRIVATE_IP is missing. Set it as a repository or production environment variable."
+            exit 1
+          fi
+
+          case "$BASTION_IP" in
+            10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.30.*|172.31.*)
+              echo "ERROR: BASTION_IP ($BASTION_IP) is a private address. GitHub-hosted runners cannot reach it. Use the bastion's PUBLIC IP."
+              exit 1
+              ;;
+          esac
+
+          echo "Bastion IP and application private IP are configured."
+
+      - name: Generate Ansible inventory
+        working-directory: ansible
+        env:
+          BASTION_IP: ${{ vars.BASTION_IP }}
+          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
+        run: |
+          cat > inventory/hosts.ini <<EOF
+          [bastion]
+          agrirent-bastion ansible_host=${BASTION_IP} ansible_user=ec2-user
+
+          [app]
+          agrirent-app ansible_host=${APP_PRIVATE_IP} ansible_user=ec2-user ansible_ssh_common_args='-o ProxyJump=ec2-user@${BASTION_IP}'
+          EOF
+          echo "Generated inventory:"
+          cat inventory/hosts.ini
       - name: install ansible and dependencies
         run: |
           pipx install --include-deps ansible
@@ -185,6 +237,28 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+      - name: Test SSH connectivity
+        shell: bash
+        env:
+          BASTION_IP: ${{ vars.BASTION_IP }}
+          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
+        run: |
+          echo "===== TEST 1: CONNECT TO BASTION ====="
+
+          ssh -vvv -i ~/.ssh/id_rsa \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=no \
+            ec2-user@"$BASTION_IP" "echo BASTION CONNECTION SUCCESSFUL"
+
+          echo "===== TEST 2: CONNECT TO APPLICATION ====="
+
+          ssh -vvv -i ~/.ssh/id_rsa \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=no \
+            -o ProxyJump=ec2-user@"$BASTION_IP" \
+            ec2-user@"$APP_PRIVATE_IP" "echo APPLICATION CONNECTION SUCCESSFUL"
 
       - name: Configure Ansible Vault password
         shell: bash
@@ -196,5 +270,13 @@ jobs:
         working-directory: ansible
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          IMAGE_URL: ${{ needs.build_scan_push.outputs.image_url }}
+          DATABASE_SECRET_ARN: ${{ vars.DATABASE_SECRET_ARN }}
         run: |
-          ansible-playbook site.yml
+          extra_vars=(-e "app_image=${IMAGE_URL}")
+
+          if [ -n "${DATABASE_SECRET_ARN:-}" ]; then
+            extra_vars+=(-e "database_secret_arn=${DATABASE_SECRET_ARN}")
+          fi
+
+          ansible-playbook site.yml "${extra_vars[@]}"
