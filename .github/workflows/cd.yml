@@ -185,6 +185,22 @@ jobs:
           [app]
           agrirent-app ansible_host=${APP_PRIVATE_IP} ansible_user=ec2-user ansible_ssh_common_args='-o ProxyJump=ec2-user@${BASTION_IP}'
           EOF
+      - name: Validate server IP variables
+        env:
+          BASTION_IP: ${{ vars.BASTION_IP }}
+          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
+        run: |
+          if [ -z "$BASTION_IP" ]; then
+            echo "ERROR: BASTION_IP is missing."
+            exit 1
+          fi
+
+          if [ -z "$APP_PRIVATE_IP" ]; then
+            echo "ERROR: APP_PRIVATE_IP is missing."
+            exit 1
+          fi
+
+          echo "Bastion IP and application private IP are configured."
       - name: install ansible and dependencies
         run: |
           pipx install --include-deps ansible
