@@ -173,6 +173,30 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Validate server IP variables
+        env:
+          BASTION_IP: ${{ vars.BASTION_IP }}
+          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
+        run: |
+          if [ -z "${BASTION_IP:-}" ]; then
+            echo "ERROR: BASTION_IP is missing. Set it as a repository or production environment variable."
+            exit 1
+          fi
+
+          if [ -z "${APP_PRIVATE_IP:-}" ]; then
+            echo "ERROR: APP_PRIVATE_IP is missing. Set it as a repository or production environment variable."
+            exit 1
+          fi
+
+          case "$BASTION_IP" in
+            10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.30.*|172.31.*)
+              echo "ERROR: BASTION_IP ($BASTION_IP) is a private address. GitHub-hosted runners cannot reach it. Use the bastion's PUBLIC IP."
+              exit 1
+              ;;
+          esac
+
+          echo "Bastion IP and application private IP are configured."
+
       - name: Generate Ansible inventory
         working-directory: ansible
         env:
@@ -186,22 +210,8 @@ jobs:
           [app]
           agrirent-app ansible_host=${APP_PRIVATE_IP} ansible_user=ec2-user ansible_ssh_common_args='-o ProxyJump=ec2-user@${BASTION_IP}'
           EOF
-      - name: Validate server IP variables
-        env:
-          BASTION_IP: ${{ vars.BASTION_IP }}
-          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
-        run: |
-          if [ -z "$BASTION_IP" ]; then
-            echo "ERROR: BASTION_IP is missing."
-            exit 1
-          fi
-
-          if [ -z "$APP_PRIVATE_IP" ]; then
-            echo "ERROR: APP_PRIVATE_IP is missing."
-            exit 1
-          fi
-
-          echo "Bastion IP and application private IP are configured."
+          echo "Generated inventory:"
+          cat inventory/hosts.ini
       - name: install ansible and dependencies
         run: |
           pipx install --include-deps ansible
@@ -247,5 +257,13 @@ jobs:
         working-directory: ansible
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          IMAGE_URL: ${{ needs.build_scan_push.outputs.image_url }}
+          DATABASE_SECRET_ARN: ${{ vars.DATABASE_SECRET_ARN }}
         run: |
-          ansible-playbook site.yml
+          extra_vars=(-e "app_image=${IMAGE_URL}")
+
+          if [ -n "${DATABASE_SECRET_ARN:-}" ]; then
+            extra_vars+=(-e "database_secret_arn=${DATABASE_SECRET_ARN}")
+          fi
+
+          ansible-playbook site.yml "${extra_vars[@]}"
