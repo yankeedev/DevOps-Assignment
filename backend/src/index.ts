@@ -38,8 +38,20 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/equipment/:id/reviews", reviewRoutes);
 app.use("/api/shops", shopRoutes);
 
+// Serve static assets (JS, CSS, images). These can be cached because they have hashed filenames.
 frontendApp.use(express.static(frontendDist));
+
+// Catch-all route for React Router.
 frontendApp.get("*", (_req, res) => {
+  // FIX: Force the browser to NEVER cache index.html. This guarantees it always
+  // grabs the latest JS bundle (where your new "Register" button lives).
+  res.setHeader(
+    "Cache-Control",
+    "no-cache, no-store, must-revalidate, proxy-revalidate"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  
   res.sendFile(path.join(frontendDist, "index.html"));
 });
 
