@@ -14,9 +14,13 @@
   roles:
     - role: common
       tags: [common]
-    - role: docker
-      tags: [docker]
+      
+    # security runs before docker
     - role: security
       tags: [security]
+      
+    - role: docker
+      tags: [docker]
+      
     - role: app_deploy
       tags: [app, deploy]
