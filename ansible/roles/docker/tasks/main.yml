@@ -1,6 +1,4 @@
 ---
-# Install or verify Docker Engine + Compose plugin.
-
 - name: Check if Docker CLI is available
   ansible.builtin.command:
     cmd: which docker
@@ -69,7 +67,6 @@
         }
       }
     mode: "0644"
-  notify: Restart docker
 
 - name: Enable and start Docker
   ansible.builtin.systemd:
@@ -82,6 +79,13 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: true
+
+# Force docker to restart after firewalld modified
+- name: Ensure Docker is restarted to rebuild iptables chains
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+  changed_when: false
 
 # ECR authentication
 
