@@ -214,6 +214,28 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+      - name: Test SSH connectivity
+        shell: bash
+        env:
+          BASTION_IP: ${{ vars.BASTION_IP }}
+          APP_PRIVATE_IP: ${{ vars.APP_PRIVATE_IP }}
+        run: |
+          echo "===== TEST 1: CONNECT TO BASTION ====="
+
+          ssh -vvv -i ~/.ssh/id_rsa \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=no \
+            ec2-user@"$BASTION_IP" "echo BASTION CONNECTION SUCCESSFUL"
+
+          echo "===== TEST 2: CONNECT TO APPLICATION ====="
+
+          ssh -vvv -i ~/.ssh/id_rsa \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=no \
+            -o ProxyJump=ec2-user@"$BASTION_IP" \
+            ec2-user@"$APP_PRIVATE_IP" "echo APPLICATION CONNECTION SUCCESSFUL"
 
       - name: Configure Ansible Vault password
         shell: bash
