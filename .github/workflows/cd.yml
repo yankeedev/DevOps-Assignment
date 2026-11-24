@@ -16,7 +16,7 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION  || 'eu-north-1' }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'agrirent' }}
+  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'agrirent-app' }}
   IMAGE_TAG: ${{ github.sha }}  
   TF_woRKING_DIR: terraform
 

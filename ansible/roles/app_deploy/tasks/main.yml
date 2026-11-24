@@ -1,4 +1,18 @@
 ---
+# Deploy the AgriRent stack: fetch RDS password from Secrets Manager,
+
+# Security invariants:
+#  - does not show up in vault.yml, Terraform state or Ansible.
+#  - output. Retrieved from Secrets Manager using IAM role of the instance.
+#  - No Log: true - The content of the rendered .env is the password + JWT.
+#  - secrets) will not be printed to stdout or CI logs.
+#   - changes the image tag without affecting compose image `${APP_IMAGE}` defined in .env file.
+
+# Idempotency:
+#   - no content change on the already processed template tasks, no change in the result
+#   - docker_compose_v2 with pull: missing skipped already-existing images
+#   - The wait for health status change is disabled 
+
 - name: Ensure application directory exists
   ansible.builtin.file:
     path: "{{ app_dir }}"
@@ -7,7 +21,43 @@
     group: root
     mode: "0755"
 
-- name: Render application environment file from vault
+
+# RDS passwprd retrieval
+
+- name: Fetch RDS master credentials from Secrets Manager
+  ansible.builtin.command:
+    cmd: >
+      aws secretsmanager get-secret-value
+      --region {{ aws_region }}
+      --secret-id {{ database_secret_arn }}
+      --query SecretString --output text
+  register: rds_secret_raw
+  changed_when: false
+  no_log: true
+  retries: 3
+  delay: 5
+  until: rds_secret_raw.rc == 0
+
+- name: Parse RDS credential JSON
+  ansible.builtin.set_fact:
+    rds_credentials: "{{ rds_secret_raw.stdout | from_json }}"
+  no_log: true
+
+- name: Verify RDS credential JSON has required keys
+  ansible.builtin.assert:
+    that:
+      - rds_credentials.username is defined
+      - rds_credentials.password is defined
+      - rds_credentials.password | length > 8
+    fail_msg: >-
+      RDS secret JSON structure is unexpected. Expected keys
+      `username` and `password`. Check with:
+      aws secretsmanager get-secret-value --secret-id {{ database_secret_arn }}
+  no_log: true
+
+# Render .env from vault
+
+- name: Render application environment file
   ansible.builtin.template:
     src: env.j2
     dest: "{{ app_dir }}/.env"
@@ -25,6 +75,9 @@
     group: root
     mode: "0644"
   notify: Restart application stack
+
+
+# Bring up the stack with health gate and failure log capture
 
 - name: Bring up the application stack
   block:
