@@ -257,5 +257,13 @@ jobs:
         working-directory: ansible
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
+          IMAGE_URL: ${{ needs.build_scan_push.outputs.image_url }}
+          DATABASE_SECRET_ARN: ${{ vars.DATABASE_SECRET_ARN }}
         run: |
-          ansible-playbook site.yml
+          extra_vars=(-e "app_image=${IMAGE_URL}")
+
+          if [ -n "${DATABASE_SECRET_ARN:-}" ]; then
+            extra_vars+=(-e "database_secret_arn=${DATABASE_SECRET_ARN}")
+          fi
+
+          ansible-playbook site.yml "${extra_vars[@]}"

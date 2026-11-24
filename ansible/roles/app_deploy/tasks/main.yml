@@ -34,9 +34,14 @@
   register: rds_secret_raw
   changed_when: false
   no_log: true
-  retries: 3
-  delay: 5
-  until: rds_secret_raw.rc == 0
+  failed_when: false
+
+- name: Fail with Secrets Manager error details
+  ansible.builtin.fail:
+    msg: >-
+      Unable to fetch RDS secret {{ database_secret_arn }} in {{ aws_region }}:
+      {{ rds_secret_raw.stderr | default('unknown error') }}
+  when: rds_secret_raw.rc != 0
 
 - name: Parse RDS credential JSON
   ansible.builtin.set_fact:
