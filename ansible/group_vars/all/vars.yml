@@ -7,7 +7,7 @@ app_dir: /opt/agrirent
 aws_region: eu-north-1
 ecr_registry: "812114844665.dkr.ecr.eu-north-1.amazonaws.com"
 ecr_repository: agrirent-app
-ecr_image_tag: v1
+ecr_image_tag: latest
 app_image: "{{ ecr_registry }}/{{ ecr_repository }}:{{ ecr_image_tag }}"
 
 # Application ports and health check
