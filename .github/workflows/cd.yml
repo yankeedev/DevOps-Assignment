@@ -103,7 +103,7 @@ jobs:
   build_scan_push:
     name: build, verify and deploy image
     runs-on: ubuntu-latest
-    timeout-minutes: 39
+    timeout-minutes: 37
     needs:
       - check
       - iac_scan
@@ -138,6 +138,7 @@ jobs:
         if: hashFiles('Dockerfile') != ''
         run: |
           docker build -t "$image_url" -t "${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest" .
+
 
       - name: Run Trivy container scan
         uses: aquasecurity/trivy-action@master
