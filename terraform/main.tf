@@ -95,7 +95,7 @@ resource "aws_instance" "app" {
   root_block_device {
     volume_size           = var.root_volume_size
     volume_type           = "gp3"
-    encrypted             = true
+    encrypted             = false # demo: test
     delete_on_termination = true
   }
 
