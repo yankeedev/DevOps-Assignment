@@ -188,6 +188,13 @@ jobs:
             exit 1
           fi
 
+          case "$BASTION_IP" in
+            10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.30.*|172.31.*)
+              echo "ERROR: BASTION_IP ($BASTION_IP) is a private address. GitHub-hosted runners cannot reach it. Use the bastion's PUBLIC IP."
+              exit 1
+              ;;
+          esac
+
           echo "Bastion IP and application private IP are configured."
 
       - name: Generate Ansible inventory
@@ -245,17 +252,6 @@ jobs:
         run: |
           echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > ~/.ansible_vault_pass
           chmod 600 ~/.ansible_vault_pass
-
-      - name: Test SSH connectivity to bastion
-        env:
-          BASTION_IP: ${{ vars.BASTION_IP }}
-        run: |
-          ssh -i ~/.ssh/id_rsa \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=15 \
-            ec2-user@"$BASTION_IP" \
-            "echo BASTION CONNECTION SUCCESSFUL"
 
       - name: run ansible playbook
         working-directory: ansible
