@@ -6,6 +6,9 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import equipmentRoutes from "./routes/equipmentRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import bookingRoutes from "./routes/bookingRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
+import shopRoutes from "./routes/shopRoutes";
 
 const app = express();
 const frontendApp = express();
@@ -13,30 +16,10 @@ const PORT = Number(process.env.PORT) || 5000;
 const FRONTEND_PORT = Number(process.env.FRONTEND_PORT) || 4173;
 const frontendDist = path.resolve(__dirname, "../../frontend/dist");
 
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:4173",
-].filter(Boolean) as string[];
-
+// We use a dynamic origin function to handle any URL (localhost, ALB, etc.)
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      const isLocalHost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-      if (isLocalHost) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error("Not allowed by CORS"));
-    },
+    origin: true, // This tells CORS to reflect the request's origin, allowing all domains
     credentials: true,
   })
 );
@@ -51,6 +34,9 @@ app.use("/auth", authRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/equipment/:id/reviews", reviewRoutes);
+app.use("/api/shops", shopRoutes);
 
 frontendApp.use(express.static(frontendDist));
 frontendApp.get("*", (_req, res) => {
@@ -68,7 +54,7 @@ if (require.main === module) {
   server.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code === "EADDRINUSE") {
       console.error(
-        `Port ${PORT} is already in use. Stop the other process (e.g. another "npm run dev") or set a different PORT in backend/.env`
+        `Port ${PORT} is already in use. Stop the other process or set a different PORT in backend/.env`
       );
       process.exit(1);
     }

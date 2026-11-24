@@ -36,3 +36,5 @@ crash.*.log
 
 # ansible
 ansible/group_vars/all/vault.yml
+terraform/tfplan
+terraform/*.tfplan

@@ -5,9 +5,12 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import LandingPage from './pages/LandingPage'
 import EquipmentListingPage from './pages/EquipmentListingPage'
+import EquipmentDetailPage from './pages/EquipmentDetailPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
+import MyToolsPage from './pages/MyToolsPage'
+import ShopsPage from './pages/ShopsPage'
 
 export default function App() {
   return (
@@ -17,6 +20,9 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/equipment" element={<EquipmentListingPage />} />
+          <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
+          <Route path="/shops" element={<ShopsPage />} />
 
           <Route
             path="/profile"
@@ -28,9 +34,18 @@ export default function App() {
           />
 
           <Route
+            path="/my-tools"
+            element={
+              <ProtectedRoute>
+                <MyToolsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['buyer', 'admin']}>
+              <ProtectedRoute>
                 <DashboardPage />
               </ProtectedRoute>
             }
@@ -45,7 +60,6 @@ export default function App() {
             }
           />
 
-          <Route path="/equipment" element={<EquipmentListingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

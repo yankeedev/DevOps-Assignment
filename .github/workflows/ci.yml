@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,6 +18,19 @@ permissions:
   contents: read
 
 jobs:
+  structure:
+    name: validate code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Check workspace structure
+        run: |
+          echo "Checking project structure for AgriRent..."
+          ls -la
+
   checks:
     name: ${{ matrix.app-name }} checks
     runs-on: ubuntu-latest
@@ -43,10 +57,10 @@ jobs:
             build-command: npm run build
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -54,6 +68,10 @@ jobs:
 
       - name: Dependencies
         run: npm ci
+        working-directory: ${{ matrix.working-directory }}
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
         working-directory: ${{ matrix.working-directory }}
 
       - name: Lint tools
@@ -83,8 +101,25 @@ jobs:
     needs: checks
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         if: hashFiles('Dockerfile') != ''
         run: docker build -t my-app:ci .
+
+      - name: Run Trivy container scan
+        if: hashFiles('Dockerfile') != ''
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'my-app:ci'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Run tfsec IaC scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: '.'
+          soft_fail: true

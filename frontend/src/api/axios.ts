@@ -1,11 +1,13 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
-const backendBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Empty string means it will use the current origin (the ALB URL)
+const backendBaseUrl = "";
 
 export const api = axios.create({
   baseURL: backendBaseUrl,
   withCredentials: true,
 });
+//token
 
 let accessToken: string | null = null;
 export const setAccessToken = (t: string | null) => {
