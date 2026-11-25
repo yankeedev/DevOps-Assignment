@@ -22,7 +22,7 @@ RUN npm run build
 FROM node:22-bookworm-slim AS production
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=6000
 
 # install curl for health-checks and create a non-root user for security
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
@@ -48,11 +48,11 @@ RUN chown -R app:app /app /home/app && \
 USER app
 
 # Expose both ports the app is running to
-EXPOSE 5000 4173
+EXPOSE 6000 4174
 
 # Health check for the API Part of the app
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -fsS http://localhost:5000/health || exit 1
+  CMD curl -fsS http://localhost:6000/health || exit 1
 
 # Start service in the same container. Node.js handles serving BOTH the API and Frontend.
 CMD ["sh", "-c", "cd /app/backend && ./node_modules/.bin/prisma db push; cd /app && node /app/backend/dist/index.js"]
