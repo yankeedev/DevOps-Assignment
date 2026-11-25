@@ -5,15 +5,15 @@ app_dir: /opt/agrirent
 
 # AWS configuration
 aws_region: eu-north-1
-ecr_registry: "812114844665.dkr.ecr.eu-north-1.amazonaws.com"
+ecr_registry: "867133439555.dkr.ecr.eu-north-1.amazonaws.com"
 ecr_repository: agrirent-app
-ecr_image_tag: latest
+ecr_image_tag: v1
 app_image: "{{ ecr_registry }}/{{ ecr_repository }}:{{ ecr_image_tag }}"
 
 # Application ports and health check
-app_backend_port: 5000
-app_frontend_port: 4173
-app_health_url: "http://127.0.0.1:5000/health"
+app_backend_port: 6000
+app_frontend_port: 4174
+app_health_url: "http://127.0.0.1:6000/health"
 app_health_retries: 10
 app_health_delay: 3
 
@@ -37,7 +37,7 @@ docker_log_max_file: "3"
 # RDS connection
 postgres_user: agrirent_admin
 postgres_db: agrirent
-postgres_host: agrirent-dev-database.cbymcmiku93j.eu-north-1.rds.amazonaws.com
+postgres_host: agrirent-dev-db.ch2iigosurjc.eu-north-1.rds.amazonaws.com
 postgres_port: 5432
 
-database_secret_arn: "arn:aws:secretsmanager:eu-north-1:812114844665:secret:rds!db-199e08a1-bb58-4aa9-b518-b215b51991d8-N7H6Fs"
+database_secret_arn: "arn:aws:secretsmanager:eu-north-1:867133439555:secret:rds!db-5adf5cc2-b221-4cd3-96a6-126a791efc8c-HY5fuX"

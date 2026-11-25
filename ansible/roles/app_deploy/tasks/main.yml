@@ -81,6 +81,17 @@
     mode: "0644"
   notify: Restart application stack
 
+- name: Copy Prometheus configuration file to the server
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../prometheus/prometheus.yml"
+    dest: "{{ app_dir }}/prometheus/prometheus.yml"
+    mode: "0644"
+
+- name: Copy Grafana configuration directory to the server
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../grafana"
+    dest: "{{ app_dir }}/grafana"
+    mode: "0644"
 
 # Bring up the stack with health gate and failure log capture
 

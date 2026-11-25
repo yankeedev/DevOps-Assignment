@@ -87,13 +87,13 @@ variable "root_volume_size" {
 variable "app_port" {
   description = "Backend API port"
   type        = number
-  default     = 5000
+  default     = 6000
 }
 
 variable "frontend_port" {
   description = "Frontend application port"
   type        = number
-  default     = 4173
+  default     = 4174
 }
 
 # Database
