@@ -64,7 +64,7 @@ Before deploying, make sure you have:
 - Docker installed.
 - An existing EC2 key pair in your selected AWS region.
 - The corresponding SSH private key.
-- An Ubuntu AMI ID compatible with your selected AWS region.
+- An Amazon Linux 2023 AMI ID or a compatible AMI selected for the AWS region.
 
 Confirm your AWS identity:
 
@@ -106,7 +106,7 @@ Important variables:
 | project_name | Project name |
 | environment | Deployment environment |
 | aws_region | AWS deployment region |
-| ami_id | Ubuntu AMI ID |
+| ami_id | Amazon Linux or compatible AMI ID |
 | instance_type | Application EC2 instance type |
 | bastion_instance_type | Bastion EC2 instance type |
 | key_pair_name | Existing AWS EC2 key pair |
@@ -255,7 +255,7 @@ terraform output -raw bastion_public_ip
 Connect using your private SSH key:
 
 ```bash
-ssh -i /path/to/private-key.pem ubuntu@BASTION_PUBLIC_IP
+ssh -i /path/to/private-key.pem ec2-user@BASTION_PUBLIC_IP
 ```
 
 Replace the private key path and Bastion public IP.

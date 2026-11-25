@@ -4,7 +4,7 @@
 
 | Service | URL |
 | :-- | :-- |
-| Live Application | http://agrirent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com/ |
+| Live Application | http://AgriRent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com |
 | GitHub Repository | https://github.com/yankeedev/DevOps-Assignment |
 | Project Board | https://github.com/users/yankeedev/projects/2 |
 
@@ -100,7 +100,7 @@ The production environment runs entirely on AWS inside a custom VPC (`10.0.0.0/1
 - NAT Gateway — allows private subnet resources to reach the internet for outbound calls
 
 **Private subnets** contain:
-- App EC2 instance — runs the Docker Compose stack (backend on port 5000, frontend on port 4173), not directly reachable from the internet
+- App EC2 instance — runs the Docker Compose stack (backend on port 6000, frontend on port 4174), not directly reachable from the internet
 - Amazon RDS PostgreSQL — database, only accepts port 5432 from the App EC2 security group
 
 **Amazon ECR** stores the Docker image. The App EC2 instance pulls images using an IAM instance role — no credentials are hardcoded.
@@ -197,10 +197,8 @@ cp .env.example .env
 Open `.env` and set:
 
 ```env
-DATABASE_URL=postgresql://postgres:yourpassword@db:5432/agrirent
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=yourpassword
-POSTGRES_DB=agrirent
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/agrirent
+APP_IMAGE=agrirent:local
 JWT_ACCESS_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
 ```
@@ -208,13 +206,15 @@ JWT_REFRESH_SECRET=your_refresh_secret
 **2. Build and start all services**
 
 ```bash
-docker-compose up --build
+docker build -t agrirent:local .
+APP_IMAGE=agrirent:local docker compose up -d
 ```
 
 **3. Run database migrations and seed data (first time only)**
 
 ```bash
-docker-compose exec app sh -c "cd /app/backend && npx prisma migrate deploy && npx prisma db seed"
+# Ensure DATABASE_URL points to your local or external PostgreSQL instance.
+docker compose exec app sh -c "cd /app/backend && npx prisma db push && npx prisma db seed"
 ```
 
 **4. Open the application**
@@ -228,13 +228,13 @@ docker-compose exec app sh -c "cd /app/backend && npx prisma migrate deploy && n
 **5. Stop the services**
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 To also remove the database volume:
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ---
@@ -311,12 +311,14 @@ Security practices applied:
 
 ### Docker Compose
 
-`docker-compose.yml` defines two services:
+`docker-compose.yml` defines an `app` service plus Prometheus, Grafana, and node-exporter services:
 
-- **app** — builds from the `Dockerfile`, serves the backend on port `5000` and the frontend on port `4173`, depends on `db` being healthy before starting
-- **db** — official `postgres:16` image with a named volume (`postgres_data`) for data persistence and a `pg_isready` health check
+- **app** — builds from or pulls the Docker image, serves the backend on port `6000` and the frontend on port `4174`
+- **prometheus** — scrapes application, Prometheus, and node-exporter metrics
+- **grafana** — provides the monitoring dashboard on port `3000`
+- **node-exporter** — exposes host metrics for Prometheus
 
-Both services use `restart: unless-stopped` and environment variables are passed in from the host `.env` file — no secrets are hardcoded.
+Docker Compose persists Grafana and Prometheus data in named volumes. Application configuration is supplied through environment variables rather than secrets committed to the repository.
 
 ### .dockerignore
 
@@ -530,6 +532,26 @@ cd /opt/agrirent && docker compose logs --tail=200
 | Write CD pipeline (cd.yml) with ECR push and Ansible deploy | Emery Barame | 07/11/2026 |
 | Update README with architecture diagram, IaC, Ansible, and CD documentation | Clarisse Mukayiranga | 08/11/2026 |
 | Write CHANGELOG.md documenting F1, F2, and Summative evolution | Solace Fadhali Aziza | 08/11/2026 |
+
+---
+
+## Current Deployment Status
+
+| Component | Current value |
+| :-- | :-- |
+| AWS region | `eu-north-1` |
+| Application Load Balancer | `http://AgriRent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com` |
+| Bastion public IP | `16.16.56.175` |
+| Application private IP | `10.0.11.164` |
+| ECR repository | `867133439555.dkr.ecr.eu-north-1.amazonaws.com/agrirent-app` |
+| ECR tag currently deployed | `v1` |
+| Backend container port | `6000` |
+| Frontend container port | `4174` |
+| PostgreSQL port | `5432` via Amazon RDS |
+| Prometheus port | `9090` on the Compose host network |
+| Grafana port | `3000` |
+
+The backend and frontend are served by the same application container. Prometheus, Grafana, and node-exporter run alongside the application through Docker Compose.
 
 ---
 
