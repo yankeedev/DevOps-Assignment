@@ -8,8 +8,6 @@ services:
       - "9115:9115"
     volumes:
       - ./prometheus/blackbox.yml:/etc/blackbox.yml:ro
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   prometheus:
