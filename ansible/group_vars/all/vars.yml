@@ -11,9 +11,9 @@ ecr_image_tag: v1
 app_image: "{{ ecr_registry }}/{{ ecr_repository }}:{{ ecr_image_tag }}"
 
 # Application ports and health check
-app_backend_port: 6000
-app_frontend_port: 4174
-app_health_url: "http://127.0.0.1:6000/health"
+app_backend_port: 5000
+app_frontend_port: 4173
+app_health_url: "http://127.0.0.1:5000/health"
 app_health_retries: 10
 app_health_delay: 3
 
