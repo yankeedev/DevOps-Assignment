@@ -1,18 +1,4 @@
 ---
-# Deploy the AgriRent stack: fetch RDS password from Secrets Manager,
-
-# Security invariants:
-#  - does not show up in vault.yml, Terraform state or Ansible.
-#  - output. Retrieved from Secrets Manager using IAM role of the instance.
-#  - No Log: true - The content of the rendered .env is the password + JWT.
-#  - secrets) will not be printed to stdout or CI logs.
-#   - changes the image tag without affecting compose image `${APP_IMAGE}` defined in .env file.
-
-# Idempotency:
-#   - no content change on the already processed template tasks, no change in the result
-#   - docker_compose_v2 with pull: missing skipped already-existing images
-#   - The wait for health status change is disabled 
-
 - name: Ensure application directory exists
   ansible.builtin.file:
     path: "{{ app_dir }}"
@@ -21,8 +7,19 @@
     group: root
     mode: "0755"
 
-
-# RDS passwprd retrieval
+# FIX: Create directories for Prometheus and Grafana configs
+- name: Ensure monitoring directories exist
+  ansible.builtin.file:
+    path: "{{ app_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - prometheus
+    - grafana/provisioning/datasources
+    - grafana/provisioning/dashboards
+    - grafana/dashboards
 
 - name: Fetch RDS master credentials from Secrets Manager
   ansible.builtin.command:
@@ -34,14 +31,9 @@
   register: rds_secret_raw
   changed_when: false
   no_log: true
-  failed_when: false
-
-- name: Fail with Secrets Manager error details
-  ansible.builtin.fail:
-    msg: >-
-      Unable to fetch RDS secret {{ database_secret_arn }} in {{ aws_region }}:
-      {{ rds_secret_raw.stderr | default('unknown error') }}
-  when: rds_secret_raw.rc != 0
+  retries: 3
+  delay: 5
+  until: rds_secret_raw.rc == 0
 
 - name: Parse RDS credential JSON
   ansible.builtin.set_fact:
@@ -54,13 +46,8 @@
       - rds_credentials.username is defined
       - rds_credentials.password is defined
       - rds_credentials.password | length > 8
-    fail_msg: >-
-      RDS secret JSON structure is unexpected. Expected keys
-      `username` and `password`. Check with:
-      aws secretsmanager get-secret-value --secret-id {{ database_secret_arn }}
+    fail_msg: "RDS secret JSON structure is unexpected. Expected keys `username` and `password`."
   no_log: true
-
-# Render .env from vault
 
 - name: Render application environment file
   ansible.builtin.template:
@@ -85,15 +72,17 @@
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../prometheus/prometheus.yml"
     dest: "{{ app_dir }}/prometheus/prometheus.yml"
+    owner: root
+    group: root
     mode: "0644"
 
-- name: Copy Grafana configuration directory to the server
+- name: Copy Grafana provisioning files to the server
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../grafana"
-    dest: "{{ app_dir }}/grafana"
+    src: "{{ playbook_dir }}/../grafana/"
+    dest: "{{ app_dir }}/grafana/"
+    owner: root
+    group: root
     mode: "0644"
-
-# Bring up the stack with health gate and failure log capture
 
 - name: Bring up the application stack
   block:
