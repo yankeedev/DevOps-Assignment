@@ -3,14 +3,23 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-# prope existing repo
+  # Blackbox probes against the real deployed AgriRent ALB.
+  # The ALB forwards only /api/* and /auth/* to the backend, so /health
+  # through the ALB returns the frontend SPA. Use /api/shops as the backend
+  # signal and /dashboard as the frontend signal.
   - job_name: blackbox-health
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://host.docker.internal:5000/health
+          - http://agrirent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com/dashboard
+        labels:
+          service: frontend
+      - targets:
+          - http://agrirent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com/api/shops
+        labels:
+          service: backend
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

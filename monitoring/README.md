@@ -1,35 +1,30 @@
 # AgriRent monitoring demo
 
-Prometheus + blackbox_exporter + Grafana stack that probes the existing
-`GET /health` endpoint and visualizes the result.
+Prometheus + `blackbox_exporter` + Grafana stack that probes the **deployed**
+AgriRent services through the ALB and visualizes availability and response
+delay.
 
 ## What this shows
 
-- `probe_success == 1` — the API returned HTTP 200 on the last probe
-- `probe_duration_seconds` — how long the health request took
-- `probe_http_status_code` — the actual HTTP status (expected `200`)
+Two services are probed every 15 seconds:
 
-This is a liveness/readiness signal: the API process is up, listening on
-port 5000, and responding. The current `/health` endpoint does not check
-RDS, so it does not prove database health.
+| Service | Target | Signal |
+| --- | --- | --- |
+| Frontend | `http://agrirent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com/dashboard` | `probe_success`, `probe_duration_seconds` |
+| Backend | `http://agrirent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com/api/shops` | `probe_success`, `probe_duration_seconds` |
 
-## Run locally
+`probe_success == 1` means the target returned HTTP 200 on the last probe.
+`probe_duration_seconds` shows the response delay. `probe_http_status_code`
+shows the actual status code.
 
-Make sure the app is running and port 5000 is published:
+> The ALB listener forwards only `/api/*` and `/auth/*` to the backend. A
+> request to `/health` through the ALB reaches the frontend SPA, so the backend
+> probe uses `/api/shops` instead. That also exercises the backend's database
+> read path, making it a stronger signal than a liveness-only endpoint.
 
-```bash
-cd ..
-docker compose up -d
-curl http://localhost:5000/health
-```
+## Run
 
-Expected:
-
-```json
-{"status":"ok","message":"AgriRent API is running"}
-```
-
-Start the monitoring stack:
+From the repository root:
 
 ```bash
 cd monitoring
@@ -37,60 +32,54 @@ docker compose up -d
 docker compose ps
 ```
 
-Verify the probe directly:
+Open:
+
+- Grafana: http://localhost:3000 (`admin` / `admin`) → **Dashboards → AgriRent → AgriRent Health**
+- Prometheus: http://localhost:9090
+
+Useful Prometheus queries:
+
+```promql
+probe_success{service="frontend"}
+probe_success{service="backend"}
+probe_duration_seconds{service="frontend"}
+probe_duration_seconds{service="backend"}
+probe_http_status_code{service=~"frontend|backend"}
+```
+
+Verify a probe directly:
 
 ```bash
-curl -s 'http://localhost:9115/probe?target=http://host.docker.internal:5000/health&module=http_2xx' \
-  | grep -E 'probe_success|probe_http_status_code|probe_duration_seconds'
+curl -sG 'http://localhost:9115/probe' \
+  --data-urlencode 'target=http://agrirent-dev-alb-1676444296.eu-north-1.elb.amazonaws.com/api/shops' \
+  --data 'module=http_2xx' \
+  | grep -E '^probe_success|^probe_http_status_code|^probe_duration_seconds'
 ```
 
 Healthy output:
 
 ```text
-probe_duration_seconds 0.00x
+probe_duration_seconds 0.4xx
 probe_http_status_code 200
 probe_success 1
 ```
 
-Open:
+## Dashboard link
 
-- Prometheus: http://localhost:9090 (query `probe_success`)
-- Grafana: http://localhost:3000 (`admin` / `admin`)
+```text
+http://localhost:3000/d/agrirent-health/agrirent-health?from=now-15m&to=now&timezone=browser&refresh=10s
+```
 
-The **AgriRent Health** dashboard is provisioned automatically under the
-`AgriRent` folder.
-
-## Run against the deployed VM
-
-Copy this `monitoring/` directory to the app VM, then:
+## Stop
 
 ```bash
 cd monitoring
-docker compose up -d
+docker compose down
 ```
-
-Reach the dashboards from your laptop through the bastion:
-
-```bash
-ssh -J ec2-user@<bastion-public-ip> \
-  -L 3000:localhost:3000 \
-  -L 9090:localhost:9090 \
-  ec2-user@<app-private-ip>
-```
-
-Then open http://localhost:3000 and http://localhost:9090 locally.
 
 ## Change the target
 
-If the app is not on the Docker host, edit
-`prometheus/prometheus.yml` and replace the target with a reachable URL,
-for example:
-
-```yaml
-- http://<alb-dns-name>/health
-```
-
-Reload Prometheus:
+Edit `prometheus/prometheus.yml`, update the two `targets` entries, then:
 
 ```bash
 docker compose restart prometheus
